@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0b0e14">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Live accelerometer readout: X, Y, Z, Total, a live graph, and highs/lows per axis.">
+<title>Motion Lab</title>
+<style>
+:root{
+  --bg:#0b0e14; --panel:#11161f; --line:#232b3a; --ink:#e7ecf5; --dim:#7c8aa0;
+  --x:#ff5470; --y:#2dd4bf; --z:#ffd23f; --t:#7c9fff;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink)}
+body{
+  font:16px/1.4 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;
+  display:flex;flex-direction:column;align-items:center;
+  padding:calc(env(safe-area-inset-top,0px) + 20px) 16px calc(env(safe-area-inset-bottom,0px) + 28px);
+}
+.wrap{width:100%;max-width:460px;display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-direction:column;gap:4px}
+h1{margin:0;font-size:26px;font-weight:700;letter-spacing:-.02em}
+h1 span{color:var(--t)}
+.sub{margin:0;color:var(--dim);font-size:14px}
+
+button{font:inherit;cursor:pointer}
+.start{
+  width:100%;padding:16px;border-radius:12px;border:1px solid var(--t);
+  background:var(--t);color:#07101f;font-weight:700;font-size:17px;letter-spacing:-.01em;
+}
+.start:disabled{opacity:.55}
+.start.live{background:transparent;color:var(--t)}
+#msg{margin:0;min-height:18px;color:var(--dim);font-size:13px}
+#msg.err{color:var(--x)}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.panel h2{margin:0 0 10px;font-size:13px;font-weight:600;color:var(--dim);text-transform:none}
+
+.channels{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.ch{border-left:3px solid var(--c);padding-left:10px}
+.ch .lbl{font-size:12px;color:var(--dim);font-family:ui-monospace,Menlo,Consolas,monospace}
+.ch .val{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:clamp(28px,8vw,40px);font-weight:700;font-variant-numeric:tabular-nums;color:var(--c);line-height:1.15}
+.ch .unit{font-size:12px;color:var(--dim);font-weight:400}
+#chX{--c:var(--x)} #chY{--c:var(--y)} #chZ{--c:var(--z)}
+
+.total{border-left:3px solid var(--t);padding-left:10px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.total .val{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:clamp(34px,10vw,48px);font-weight:700;color:var(--t);font-variant-numeric:tabular-nums}
+.total .formula{color:var(--dim);font-size:12px;font-family:ui-monospace,Menlo,Consolas,monospace}
+
+canvas#graph{display:block;width:100%;height:150px;border-radius:8px;background:#0d1320}
+.legend{display:flex;gap:14px;margin-top:8px;font-size:12px;color:var(--dim)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+.mm{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.mm .col{display:flex;flex-direction:column;gap:6px}
+.mm .col .axis{font-size:12px;color:var(--dim);font-weight:600}
+.mm .row{display:flex;justify-content:space-between;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px}
+.mm .row span:last-child{font-variant-numeric:tabular-nums}
+.mm .hi{color:var(--ink)}
+.mm .lo{color:var(--dim)}
+
+.reset{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:14px}
+.reset:active{background:var(--line)}
+
+footer{color:var(--dim);font-size:12px;text-align:center;padding-top:4px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.argyria-home{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:9999;padding:8px 12px;border:1px solid #7c9fff88;border-radius:999px;background:#11161feF;color:#e7ecf5;text-decoration:none;font-size:13px;font-weight:700}
+</style></head>
+<body>
+<a class="argyria-home" href="../index.html" aria-label="Return to Argyria home">✦ Argyria</a>
+<div class="wrap">
+  <header>
+    <h1>Motion <span>Lab</span></h1>
+    <p class="sub">Live accelerometer readout &ndash; X, Y, Z and Total.</p>
+  </header>
+
+  <button id="startBtn" class="start">Start Sensors</button>
+  <p id="msg"></p>
+
+  <section class="panel">
+    <h2>Live values (m/s&sup2;)</h2>
+    <div class="channels">
+      <div class="ch" id="chX"><div class="lbl">X</div><div class="val" id="vx">0.00</div></div>
+      <div class="ch" id="chY"><div class="lbl">Y</div><div class="val" id="vy">0.00</div></div>
+      <div class="ch" id="chZ"><div class="lbl">Z</div><div class="val" id="vz">0.00</div></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="total">
+      <div>
+        <div class="lbl" style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--dim)">TOTAL</div>
+        <div class="val" id="vt">0.00</div>
+      </div>
+      <div class="formula">&radic;(x&sup2; + y&sup2; + z&sup2;)</div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Live graph</h2>
+    <canvas id="graph"></canvas>
+    <div class="legend">
+      <span><i style="background:var(--x)"></i>X</span>
+      <span><i style="background:var(--y)"></i>Y</span>
+      <span><i style="background:var(--z)"></i>Z</span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Highest / lowest</h2>
+    <div class="mm">
+      <div class="col"><div class="axis" style="color:var(--x)">X</div>
+        <div class="row"><span class="hi">High</span><span id="xhi">0.00</span></div>
+        <div class="row"><span class="lo">Low</span><span id="xlo">0.00</span></div></div>
+      <div class="col"><div class="axis" style="color:var(--y)">Y</div>
+        <div class="row"><span class="hi">High</span><span id="yhi">0.00</span></div>
+        <div class="row"><span class="lo">Low</span><span id="ylo">0.00</span></div></div>
+      <div class="col"><div class="axis" style="color:var(--z)">Z</div>
+        <div class="row"><span class="hi">High</span><span id="zhi">0.00</span></div>
+        <div class="row"><span class="lo">Low</span><span id="zlo">0.00</span></div></div>
+    </div>
+  </section>
+
+  <button id="resetBtn" class="reset">Reset highs / lows &amp; graph</button>
+  <footer>Works on iPhone (tap Start Sensors to grant motion access) and Android.</footer>
+</div>
+
+<script>
+/* ---------- state ---------- */
+let raw={x:0,y:0,z:0,t:0};
+let mm={x:[0,0],y:[0,0],z:[0,0]};   // [min,max]
+let hist=[];                        // recent {x,y,z} samples for the graph
+let haveSample=false;
+const MAXHIST=140;
+
+const $=id=>document.getElementById(id);
+const f2=n=>n.toFixed(2);
+
+function resetStats(){
+  mm={x:[0,0],y:[0,0],z:[0,0]};
+  hist=[];
+  haveSample=false;
+  $('xhi').textContent=$('xlo').textContent='0.00';
+  $('yhi').textContent=$('ylo').textContent='0.00';
+  $('zhi').textContent=$('zlo').textContent='0.00';
+  drawGraph();
+}
+$('resetBtn').onclick=resetStats;
+
+/* ---------- reading the sensor ---------- */
+function onMotion(e){
+  // iPhone and Android both report accelerationIncludingGravity reliably;
+  // plain "acceleration" (gravity removed) is null on many Android browsers, so prefer the gravity version.
+  const a=e.accelerationIncludingGravity||e.acceleration;
+  if(!a||a.x==null)return;
+  raw.x=a.x;raw.y=a.y;raw.z=a.z;
+  raw.t=Math.sqrt(raw.x*raw.x+raw.y*raw.y+raw.z*raw.z);
+
+  if(!haveSample){ // first sample: start min/max from here rather than assuming 0
+    mm.x=[raw.x,raw.x];mm.y=[raw.y,raw.y];mm.z=[raw.z,raw.z];haveSample=true;
+  }else{
+    mm.x[0]=Math.min(mm.x[0],raw.x);mm.x[1]=Math.max(mm.x[1],raw.x);
+    mm.y[0]=Math.min(mm.y[0],raw.y);mm.y[1]=Math.max(mm.y[1],raw.y);
+    mm.z[0]=Math.min(mm.z[0],raw.z);mm.z[1]=Math.max(mm.z[1],raw.z);
+  }
+  hist.push({x:raw.x,y:raw.y,z:raw.z});
+  if(hist.length>MAXHIST)hist.shift();
+
+  $('vx').textContent=f2(raw.x);$('vy').textContent=f2(raw.y);$('vz').textContent=f2(raw.z);$('vt').textContent=f2(raw.t);
+  $('xhi').textContent=f2(mm.x[1]);$('xlo').textContent=f2(mm.x[0]);
+  $('yhi').textContent=f2(mm.y[1]);$('ylo').textContent=f2(mm.y[0]);
+  $('zhi').textContent=f2(mm.z[1]);$('zlo').textContent=f2(mm.z[0]);
+  drawGraph();
+}
+
+/* ---------- Start Sensors: permission requested only on this tap ---------- */
+function beginListening(){
+  window.addEventListener('devicemotion',onMotion);
+  $('startBtn').textContent='Sensors live';
+  $('startBtn').classList.add('live');
+  $('startBtn').disabled=true;
+  $('msg').textContent='Reading accelerationIncludingGravity. Move the phone to see the numbers change.';
+  $('msg').classList.remove('err');
+}
+$('startBtn').onclick=()=>{
+  if(typeof DeviceMotionEvent==='undefined'){
+    $('msg').textContent='Motion sensors are not available in this browser.';
+    $('msg').classList.add('err');
+    return;
+  }
+  if(typeof DeviceMotionEvent.requestPermission==='function'){
+    // iOS 13+: permission must be requested from inside a user gesture, which this click handler is.
+    $('startBtn').disabled=true;$('msg').textContent='Requesting motion access\u2026';
+    DeviceMotionEvent.requestPermission().then(res=>{
+      if(res==='granted')beginListening();
+      else{
+        $('startBtn').disabled=false;
+        $('msg').textContent='Motion access was denied. Enable it in Settings \u2192 Safari \u2192 Motion & Orientation Access, then reload.';
+        $('msg').classList.add('err');
+      }
+    }).catch(()=>{
+      $('startBtn').disabled=false;
+      $('msg').textContent='Could not request motion access.';
+      $('msg').classList.add('err');
+    });
+  }else{
+    // Android / other browsers: no permission prompt, just start listening.
+    beginListening();
+  }
+};
+
+/* ---------- live graph ---------- */
+const cv=$('graph');
+function sizeCanvas(){
+  const r=cv.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);
+  cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr);
+  cv.getContext('2d').setTransform(dpr,0,0,dpr,0,0);
+}
+function drawGraph(){
+  const r=cv.getBoundingClientRect();
+  if(cv.width!==Math.round(r.width*Math.min(devicePixelRatio||1,2)))sizeCanvas();
+  const g=cv.getContext('2d'),W=r.width,H=r.height;
+  g.clearRect(0,0,W,H);
+  g.strokeStyle='#1b2433';g.lineWidth=1;
+  g.beginPath();g.moveTo(0,H/2);g.lineTo(W,H/2);g.stroke();
+  if(hist.length<2)return;
+  const scale=H/2/12;  // +-12 m/s^2 fills the panel; typical gravity-only reading is ~9.8
+  const cols={x:'#ff5470',y:'#2dd4bf',z:'#ffd23f'};
+  ['x','y','z'].forEach(k=>{
+    g.strokeStyle=cols[k];g.lineWidth=2;g.beginPath();
+    hist.forEach((p,i)=>{
+      const px=i/(MAXHIST-1)*W, py=H/2-p[k]*scale;
+      i?g.lineTo(px,py):g.moveTo(px,py);
+    });
+    g.stroke();
+  });
+}
+addEventListener('resize',()=>{sizeCanvas();drawGraph()});
+sizeCanvas();drawGraph();
+</script>
+<style>#argyria-home-return{position:fixed;z-index:99999;top:calc(10px + env(safe-area-inset-top));left:10px;padding:9px 12px;border:1px solid #d8c48c99;border-radius:12px;background:#100d20eF;color:#f3dfaa;text-decoration:none;font:600 12px system-ui;box-shadow:0 5px 18px #0008;backdrop-filter:blur(10px)}body{scroll-padding-top:60px}</style><a id="argyria-home-return" href="../index.html">✧ Argyria Home</a></body></html>

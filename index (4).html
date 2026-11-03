@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101b2c"><meta name="description" content="Argyria Wellness Center daily wellness journal">
+<title>Argyria | Wellness Center</title>
+<link rel="stylesheet" href="./css/wellness.css"><script src="./js/wellness.js" defer></script>
+</head>
+<body>
+<header class="topbar"><a class="brand" href="../index.html"><span class="brandmark">✧</span><span><b>ARGYRIA</b><small>WELLNESS CENTER</small></span></a><span id="todayLabel"></span><a class="info" href="../index.html" aria-label="Return to Argyria main menu" title="Return to Argyria">⌂</a><button type="button" id="privacyButton" class="info" aria-label="Privacy information">ⓘ</button></header>
+<main class="shell">
+<section class="hero"><div><p class="eyebrow">YOUR DAILY JOURNEY</p><h1>A little care,<br><em>a brighter day.</em></h1><p>Small steps matter. Record what feels right for you and celebrate the care you give yourself.</p></div><div class="moon" aria-hidden="true">✧</div></section>
+<section class="sectionhead"><div><p class="eyebrow">TODAY AT A GLANCE</p><h2>Your wellness journal</h2></div><span id="dateChip" class="datechip"></span></section>
+<section class="metrics">
+<article class="card water"><div class="cardtop"><span>◈</span><small>HYDRATION</small></div><div class="value"><strong id="waterValue">0</strong><span>/ 8 glasses</span></div><div class="track"><i id="waterProgress"></i></div><p id="waterNote">Every glass is a small act of care.</p><div class="actions"><button type="button" id="waterMinus" class="secondary" aria-label="Remove one glass">−</button><button type="button" id="waterPlus" class="primary">＋ Add water</button></div></article>
+<article class="card sleep"><div class="cardtop"><span>☾</span><small>SLEEP</small></div><div class="value"><strong id="sleepValue">—</strong><span>hours</span></div><div class="track"><i id="sleepProgress"></i></div><p>Record your previous night's sleep.</p><form id="sleepForm" class="entry"><label class="sr" for="sleepInput">Sleep hours</label><input id="sleepInput" type="number" min="0" max="24" step=".5" placeholder="e.g. 7.5"><button type="submit" class="primary">Save</button></form></article>
+<article class="card movement"><div class="cardtop"><span>⌁</span><small>MOVEMENT</small></div><div class="value"><strong id="stepsValue">0</strong><span>steps</span></div><div class="track"><i id="stepsProgress"></i></div><p id="stepsNote">Enter a step count to track your day.</p><form id="stepsForm" class="entry"><label class="sr" for="stepsInput">Steps today</label><input id="stepsInput" type="number" min="0" max="100000" step="1" placeholder="Enter steps"><button type="submit" class="primary">Save</button></form></article>
+<article class="card mood"><div class="cardtop"><span>♡</span><small>MOOD CHECK-IN</small></div><div class="value"><strong id="moodValue" class="moodvalue">Not recorded</strong></div><p id="moodSuggestion">How are you feeling at this moment?</p><div class="moods" role="group" aria-label="Choose your mood"><button type="button" data-mood="Happy" aria-label="Happy" aria-pressed="false"><span class="moodicon" aria-hidden="true">☀</span><span class="moodlabel">Happy</span></button><button type="button" data-mood="Calm" aria-label="Calm" aria-pressed="false"><span class="moodicon" aria-hidden="true">☁</span><span class="moodlabel">Calm</span></button><button type="button" data-mood="Neutral" aria-label="Neutral" aria-pressed="false"><span class="moodicon" aria-hidden="true">◌</span><span class="moodlabel">Neutral</span></button><button type="button" data-mood="Tired" aria-label="Tired" aria-pressed="false"><span class="moodicon" aria-hidden="true">☾</span><span class="moodlabel">Tired</span></button><button type="button" data-mood="Stressed" aria-label="Stressed" aria-pressed="false"><span class="moodicon" aria-hidden="true">〰</span><span class="moodlabel">Stressed</span></button><button type="button" data-mood="Sad" aria-label="Sad" aria-pressed="false"><span class="moodicon" aria-hidden="true">♡</span><span class="moodlabel">Sad</span></button></div><small>Choose the feeling closest to yours.</small></article>
+</section>
+<section class="lower">
+<article class="breath panel"><div class="breathcopy"><p class="eyebrow">MINDFULNESS SANCTUARY</p><h2>Pause. Breathe. Reset.</h2><p>A short guided breathing practice can offer a quiet moment in a busy day. Follow the orb at a comfortable pace.</p><div class="breathcontrols"><label for="breathDuration">Practice</label><select id="breathDuration"><option value="60">1 minute</option><option value="120">2 minutes</option><option value="180">3 minutes</option></select><button type="button" id="breathStart" class="primary">Begin breathing</button><button type="button" id="breathStop" class="secondary" disabled>Stop</button></div><p id="breathStatus" role="status" aria-live="polite">Ready when you are.</p></div><div class="breathvisual"><div class="ring"></div><div class="orb" id="breathOrb"></div><span id="breathWord">Breathe</span></div></article>
+<article class="panel progress" id="progress"><p class="eyebrow">YOUR JOURNEY</p><h2>Gentle progress</h2><p class="muted">See how your daily records compare with goals you can adjust to suit yourself.</p>
+<div class="goal-list">
+  <div class="goal-row"><div class="goal-heading"><span>Hydration</span><b id="waterGoalText">0 / 8 glasses</b></div><div class="track wide"><i id="waterGoalProgress"></i></div></div>
+  <div class="goal-row"><div class="goal-heading"><span>Sleep</span><b id="sleepGoalText">Not recorded</b></div><div class="track wide"><i id="sleepGoalProgress"></i></div></div>
+  <div class="goal-row"><div class="goal-heading"><span>Movement</span><b id="stepsGoalText">Not recorded</b></div><div class="track wide"><i id="stepsGoalProgress"></i></div></div>
+  <div class="goal-row mood-goal"><div class="goal-heading"><span>Mood check-in</span><b id="moodGoalText">Not recorded</b></div><div class="track wide"><i id="moodGoalProgress"></i></div></div>
+</div>
+<details class="goal-settings"><summary>Adjust my daily goals</summary><p class="muted">Choose personal targets. These are flexible tracking goals, not medical requirements.</p>
+<form id="goalForm" class="goal-form">
+<label for="waterTarget">Water (glasses)<input id="waterTarget" type="number" min="1" max="30" step="1" value="8"></label>
+<label for="sleepTarget">Sleep (hours)<input id="sleepTarget" type="number" min="1" max="24" step=".5" value="8"></label>
+<label for="stepsTarget">Steps<input id="stepsTarget" type="number" min="1" max="100000" step="100" value="8000"></label>
+<button class="primary" type="submit">Save my goals</button>
+</form></details>
+<div class="completion"><span>Daily check-ins recorded</span><b id="entryCount">0 / 4</b></div><div class="track wide"><i id="entryProgress"></i></div>
+<p class="encourage" id="encouragement">There is no perfect day to achieve. Start wherever you are.</p></article>
+</section>
+<section class="worlds"><p class="eyebrow">MORE TO EXPLORE</p><h2>Your wellness worlds</h2><p class="muted">These experiences will connect to the dashboard as they are developed.</p><div class="worldgrid">
+<div class="world"><span>✿</span><div><b>Garden of Vitality</b><small>Grow a garden through healthy habits</small></div><em>Coming next</em></div>
+<div class="world"><span>✧</span><div><b>Relaxation Sanctuary</b><small>Explore calming environments and sound</small></div><em>Coming next</em></div>
+<div class="world"><span>❋</span><div><b>Nutrition Quest</b><small>Discover balanced food choices</small></div><em>Coming next</em></div>
+<div class="world"><span>♫</span><div><b>Rhythm of Motion</b><small>Move with rhythm and guided challenges</small></div><em>Coming next</em></div>
+<div class="world"><span>◇</span><div><b>Crystal Focus</b><small>Try short attention and focus activities</small></div><em>Coming next</em></div>
+</div></section>
+<footer><span>ARGYRIA · WELLNESS CENTER</span><button type="button" id="resetButton">Reset today's records</button></footer>
+</main>
+<nav class="bottomnav" aria-label="Main navigation"><a class="active" href="#">⌂<small>Home</small></a><a href="#worlds">✿<small>Garden</small></a><a href="#worlds">✧<small>Activities</small></a><a href="#progress">▥<small>Progress</small></a></nav>
+<dialog id="privacyDialog"><button type="button" id="privacyClose" class="close" aria-label="Close">×</button><p class="eyebrow">YOUR PRIVACY</p><h2>Your records stay on this device</h2><p>This prototype stores wellness entries in this browser's local storage. It does not send them to a server or create an account. Clearing browser data may remove these records. Avoid entering information you do not want stored on this device.</p><p>Suggestions are general supportive prompts, not medical advice, diagnosis, or treatment.</p><button type="button" id="privacyOk" class="primary">I understand</button></dialog>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body></html>
