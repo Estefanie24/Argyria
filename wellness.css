@@ -28,6 +28,3 @@
 
 /* Daily history */
 .history-panel{margin-top:22px}.history-list{display:grid;gap:10px}.history-row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#ffffff08}.history-row span{color:var(--muted);font-size:.9rem;line-height:1.5}
-
-/* Linked wellness activity cards */
-.world-link{color:inherit;text-decoration:none;cursor:pointer;transition:border-color .2s,background .2s,transform .2s}.world-link:hover,.world-link:focus-visible{border-color:var(--cyan);background:#ffffff12;outline:none}.world-link:focus-visible{box-shadow:0 0 0 2px var(--cyan)}.world-link:active{transform:scale(.99)}.world-link em{color:var(--cyan)}
