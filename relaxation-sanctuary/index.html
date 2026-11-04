@@ -226,7 +226,7 @@ button:disabled {
 }
 
 audio {
-    display: none; /* Controlled via JS */
+    display: none;
 }
 </style>
 </head>
@@ -239,7 +239,7 @@ audio {
     <div>
         <h1>🌙 Relaxation Sanctuary</h1>
         <p class="subtitle">
-            Breathe slowly, tap, or move your phone to release magical sparkles.
+            Breathe slowly and tap the sanctuary to release magical sparkles.
         </p>
     </div>
 
@@ -299,10 +299,6 @@ audio {
             Start breathing
         </button>
 
-        <button id="motionBtn" class="secondary">
-            ✨ Enable motion sparkles
-        </button>
-
         <button id="stop" class="secondary" disabled>
             Stop
         </button>
@@ -315,7 +311,7 @@ audio {
     </audio>
 
     <p class="note">
-        Gently moving your phone or tapping the orb area creates visual sparkles around the breathing orb.
+        Tapping the sanctuary area creates visual sparkles around the breathing orb.
         This activity supports mindfulness and relaxation and is not a medical treatment.
     </p>
 
@@ -349,14 +345,12 @@ function initAudioContext() {
 }
 
 function stopAllAudio() {
-    // Stop Web Audio synth
     activeNodes.forEach(node => {
         try { node.stop(); } catch(e){}
         try { node.disconnect(); } catch(e){}
     });
     activeNodes = [];
     
-    // Stop local HTML5 Audio
     const localAudio = $("ambientFile");
     localAudio.pause();
     localAudio.currentTime = 0;
@@ -367,13 +361,12 @@ function playSelectedAudio() {
     initAudioContext();
     
     const choice = $("audioSelect").value;
-    
     if (choice === "none") return;
     
     if (choice === "file") {
         $("ambientFile").play().catch(err => {
             console.warn("Local file playback prevented or missing:", err);
-            $("status").textContent = "Local file soundscape requires 'audio/ambient-sanctuary.wav'. Switching to Synth Ambient.";
+            $("status").textContent = "Local file requires 'audio/ambient-sanctuary.wav'. Switching to Synth Ambient.";
             $("audioSelect").value = "cosmic";
             playSelectedAudio();
         });
@@ -387,7 +380,6 @@ function playSelectedAudio() {
     synthGain.connect(audioCtx.destination);
 
     if (choice === "cosmic") {
-        // Deep Drone + Shimmer
         const freqs = [55, 110, 164.81, 220, 277.18];
         freqs.forEach(freq => {
             const osc = audioCtx.createOscillator();
@@ -408,7 +400,6 @@ function playSelectedAudio() {
         });
     } 
     else if (choice === "waves" || choice === "rain") {
-        // Pink/White Noise Filtered
         const bufferSize = audioCtx.sampleRate * 2;
         const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         const output = noiseBuffer.getChannelData(0);
@@ -440,7 +431,6 @@ function playSelectedAudio() {
         activeNodes.push(whiteNoise, lfo);
     }
     else if (choice === "bowl") {
-        // Tibetan Singing Bowl Harmonic Chime
         const baseFreq = 216;
         const harmonics = [1, 2.76, 5.4, 8.9];
         harmonics.forEach(h => {
@@ -565,12 +555,8 @@ $("audioSelect").addEventListener("change", () => {
 
 
 /* =========================
-   MOTION & TOUCH SPARKLES
+   TOUCH SPARKLES
 ========================= */
-
-let motionEnabled = false;
-let lastMagnitude = null;
-let lastSparkTime = 0;
 
 function createSparkles(intensity = 1, originX = null, originY = null) {
     const scene = $("scene");
@@ -600,7 +586,7 @@ function createSparkles(intensity = 1, originX = null, originY = null) {
     }
 }
 
-// Tap/Click to spawn sparkles fallback
+// Tap/Click to spawn sparkles
 $("scene").addEventListener("click", (e) => {
     const rect = $("scene").getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -608,63 +594,6 @@ $("scene").addEventListener("click", (e) => {
     createSparkles(1.5, x, y);
 });
 
-/* Detect phone movement */
-function handleMotion(event) {
-    if (!motionEnabled) return;
-
-    const acceleration = event.accelerationIncludingGravity || event.acceleration;
-    if (!acceleration) return;
-
-    const x = Number(acceleration.x) || 0;
-    const y = Number(acceleration.y) || 0;
-    const z = Number(acceleration.z) || 0;
-
-    const magnitude = Math.sqrt(x * x + y * y + z * z);
-
-    if (lastMagnitude !== null) {
-        const change = Math.abs(magnitude - lastMagnitude);
-        const now = Date.now();
-
-        if (change > 0.8 && now - lastSparkTime > 250) {
-            lastSparkTime = now;
-            createSparkles(Math.min(2.5, change / 2));
-            $("status").textContent = "Motion detected ✨ Sparkles released.";
-        }
-    }
-    lastMagnitude = magnitude;
-}
-
-/* Enable motion sensor */
-async function enableMotion() {
-    try {
-        if (typeof DeviceMotionEvent === "undefined") {
-            $("status").textContent = "Motion sensors not detected. Tap the orb area to release sparkles!";
-            return;
-        }
-
-        if (typeof DeviceMotionEvent.requestPermission === "function") {
-            const permission = await DeviceMotionEvent.requestPermission();
-            if (permission !== "granted") {
-                $("status").textContent = "Motion permission was not granted.";
-                return;
-            }
-        }
-
-        window.addEventListener("devicemotion", handleMotion, { passive: true });
-        motionEnabled = true;
-        $("motionBtn").textContent = "✨ Motion sparkles enabled";
-        $("motionBtn").disabled = true;
-        $("status").textContent = "Motion sensor enabled. Gently move your phone to create sparkles.";
-
-        createSparkles(1.5);
-
-    } catch (error) {
-        console.error(error);
-        $("status").textContent = "Could not enable motion. Tap screen to create sparkles instead.";
-    }
-}
-
-$("motionBtn").addEventListener("click", enableMotion);
 
 /* =========================
    HOME BUTTON
