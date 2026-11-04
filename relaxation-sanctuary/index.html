@@ -21,7 +21,45 @@ box-shadow:0 0 30px #75eaff,0 0 80px rgba(113,102,255,.55)}
 .phase{font-size:1.5rem;font-weight:800}.count{font-size:2.7rem;color:#bdf4ff;font-weight:800;margin:8px}
 .controls{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}
 audio{width:100%;margin-top:18px}#status{color:#bdf4ff;min-height:1.5em}
+  <div class="scene" id="scene">
+    <div class="orb" id="orb"></div>
+</div>
 </style>
+  .scene {
+    position: relative;
+    overflow: hidden;
+}
+
+.sparkle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: white;
+    box-shadow:
+        0 0 8px 2px #79eaff,
+        0 0 20px 5px rgba(140, 120, 255, 0.55);
+    pointer-events: none;
+    animation: sparkleMove 1.4s ease-out forwards;
+}
+
+@keyframes sparkleMove {
+    0% {
+        transform: translate(0, 0) scale(0.4);
+        opacity: 0;
+    }
+
+    15% {
+        opacity: 1;
+    }
+
+    100% {
+        transform:
+            translate(var(--dx), var(--dy))
+            scale(0);
+        opacity: 0;
+    }
+}
 </head>
 <body>
 <main>
@@ -38,6 +76,9 @@ audio{width:100%;margin-top:18px}#status{color:#bdf4ff;min-height:1.5em}
 
 <div class="controls">
 <button id="start">Start breathing</button>
+<button id="motionBtn" class="secondary">
+  ✨ Enable motion sparkles
+</button>
 <button class="secondary" id="stop" disabled>Stop</button>
 </div>
 
@@ -73,6 +114,139 @@ $('stop').onclick=()=>{
 // Explicit repository home URL. If this opens Motion Lab, the repository root index.html
 // has been replaced and must be restored separately.
 $('homeBtn').onclick=()=>location.href='https://estefanie24.github.io/Argyria/';
+  let motionEnabled = false;
+let lastMagnitude = null;
+let lastSparkTime = 0;
+
+function createSparkles(intensity = 1) {
+    const scene = document.getElementById("scene");
+
+    const amount = Math.max(
+        3,
+        Math.min(10, Math.round(3 + intensity * 2))
+    );
+
+    for (let i = 0; i < amount; i++) {
+        const sparkle = document.createElement("span");
+        sparkle.className = "sparkle";
+
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 40 + Math.random() * 100;
+
+        sparkle.style.left =
+            (50 + (Math.random() - 0.5) * 20) + "%";
+
+        sparkle.style.top =
+            (50 + (Math.random() - 0.5) * 20) + "%";
+
+        sparkle.style.setProperty(
+            "--dx",
+            Math.cos(angle) * distance + "px"
+        );
+
+        sparkle.style.setProperty(
+            "--dy",
+            Math.sin(angle) * distance + "px"
+        );
+
+        scene.appendChild(sparkle);
+
+        setTimeout(() => {
+            sparkle.remove();
+        }, 1500);
+    }
+}
+
+function handleMotion(event) {
+    if (!motionEnabled) return;
+
+    const acceleration =
+        event.accelerationIncludingGravity ||
+        event.acceleration;
+
+    if (!acceleration) return;
+
+    const x = Number(acceleration.x) || 0;
+    const y = Number(acceleration.y) || 0;
+    const z = Number(acceleration.z) || 0;
+
+    const magnitude = Math.sqrt(
+        x * x + y * y + z * z
+    );
+
+    if (lastMagnitude !== null) {
+        const change =
+            Math.abs(magnitude - lastMagnitude);
+
+        const now = Date.now();
+
+        if (
+            change > 1.3 &&
+            now - lastSparkTime > 300
+        ) {
+            lastSparkTime = now;
+
+            createSparkles(
+                Math.min(2.5, change / 2)
+            );
+        }
+    }
+
+    lastMagnitude = magnitude;
+}
+
+async function enableMotion() {
+    try {
+        if (typeof DeviceMotionEvent === "undefined") {
+            alert(
+                "Motion sensors are not available in this browser."
+            );
+            return;
+        }
+
+        if (
+            typeof DeviceMotionEvent.requestPermission ===
+            "function"
+        ) {
+            const permission =
+                await DeviceMotionEvent.requestPermission();
+
+            if (permission !== "granted") {
+                alert(
+                    "Motion permission was not granted."
+                );
+                return;
+            }
+        }
+
+        window.addEventListener(
+            "devicemotion",
+            handleMotion,
+            { passive: true }
+        );
+
+        motionEnabled = true;
+
+        const button =
+            document.getElementById("motionBtn");
+
+        button.textContent =
+            "✨ Motion sparkles enabled";
+
+        button.disabled = true;
+
+    } catch (error) {
+        console.error(error);
+
+        alert(
+            "Could not enable motion. Please check your browser permissions."
+        );
+    }
+}
+
+document
+    .getElementById("motionBtn")
+    .addEventListener("click", enableMotion);
 </script>
 </body>
 </html>
