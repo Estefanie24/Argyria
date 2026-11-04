@@ -5,56 +5,74 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Argyria | Relaxation Sanctuary</title>
 <style>
-:root{--ink:#eaf7ff;--muted:#aac5d5;--glass:rgba(9,24,43,.68);--accent:#74e8ff}
-*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink);background:radial-gradient(circle at 50% 20%,#254c72,#10223c 40%,#07111f)}
-main{max-width:720px;margin:auto;padding:20px 16px 36px}header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px}
-h1{font-size:clamp(1.5rem,6vw,2.4rem);margin:0}.subtitle,.note,#audioStatus{color:var(--muted);line-height:1.45}
-button{border:0;border-radius:16px;padding:13px 17px;font-weight:700;font-size:1rem;color:#07111f;background:linear-gradient(135deg,var(--accent),#d2f8ff)}
-button.secondary{background:rgba(255,255,255,.12);color:var(--ink);border:1px solid rgba(255,255,255,.18)}
-.card{background:var(--glass);border:1px solid rgba(170,225,255,.18);box-shadow:0 18px 50px rgba(0,0,0,.22);border-radius:26px;padding:22px;margin:15px 0}
-.breath-wrap{display:grid;place-items:center;min-height:330px;text-align:center}.orb{width:150px;height:150px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#b9f5ff 10%,#65d9ff 36%,#7552d7 70%,#24164d);box-shadow:0 0 25px #79e9ff,0 0 75px rgba(113,102,255,.55)}
-.orb.breathe{animation:breathe 8s ease-in-out infinite}@keyframes breathe{0%,100%{transform:scale(.78)}50%{transform:scale(1.45)}}
-.phase{font-size:1.55rem;font-weight:800;margin-top:36px}.count{font-size:3rem;font-weight:800;color:#aeefff}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.stat{padding:16px;border-radius:18px;background:rgba(255,255,255,.07)}.stat b{display:block;font-size:1.3rem;color:#bff5ff}
-.controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+:root{--ink:#eaf7ff;--muted:#b7cbd9;--card:rgba(10,25,48,.78);--accent:#79eaff}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink);
+background:radial-gradient(circle at 50% 12%,#315d84 0,#142944 40%,#07111f 100%)}
+main{max-width:720px;margin:auto;padding:20px 16px 40px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+h1{margin:0;font-size:clamp(1.6rem,6vw,2.4rem)}.subtitle,.note{color:var(--muted);line-height:1.5}
+.card{background:var(--card);border:1px solid rgba(150,225,255,.18);border-radius:26px;padding:22px;box-shadow:0 18px 50px rgba(0,0,0,.3)}
+button{border:0;border-radius:16px;padding:13px 17px;font-size:1rem;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#73e6ff,#d8faff);color:#07111f}
+.secondary{background:rgba(255,255,255,.1);color:var(--ink);border:1px solid rgba(255,255,255,.18)}
+.center{text-align:center}.orb{width:150px;height:150px;margin:30px auto;border-radius:50%;
+background:radial-gradient(circle at 35% 30%,#fff,#c2f7ff 10%,#66dfff 38%,#7656d7 72%,#27164e);
+box-shadow:0 0 30px #75eaff,0 0 80px rgba(113,102,255,.55)}
+.breathe{animation:breathe 8s ease-in-out infinite}@keyframes breathe{0%,100%{transform:scale(.78)}50%{transform:scale(1.42)}}
+.phase{font-size:1.5rem;font-weight:800}.count{font-size:2.7rem;color:#bdf4ff;font-weight:800;margin:8px}
+.controls{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}
+audio{width:100%;margin-top:18px}#status{color:#bdf4ff;min-height:1.5em}
 </style>
 </head>
-<body><main>
-<header><div><h1>🌙 Relaxation Sanctuary</h1><p class="subtitle">A gentle space for breathing, calm, and mindful pauses.</p></div><button class="secondary" onclick="location.href='../index.html'">← Home</button></header>
-<section class="card">
-<div class="breath-wrap"><div><div class="orb" id="orb"></div><div class="phase" id="phase">Ready to begin</div><div class="count" id="count">—</div></div></div>
-<div class="grid"><div class="stat"><b>Gentle</b>Mindful breathing</div><div class="stat"><b id="cycles">0</b>Breathing cycles</div></div>
-<p class="note">This is a wellness and mindfulness activity, not a medical treatment or diagnostic tool.</p>
-<div class="controls"><button id="start">Start breathing</button><button class="secondary" id="sound">🔊 Start ambient sound</button><button class="secondary" id="stop" disabled>Stop</button></div>
-<p id="audioStatus" aria-live="polite">Tap “Start ambient sound” to enable audio.</p>
+<body>
+<main>
+<header>
+<div><h1>🌙 Relaxation Sanctuary</h1><p class="subtitle">A gentle space for breathing, calm, and mindful pauses.</p></div>
+<button class="secondary" id="homeBtn">← Argyria Home</button>
+</header>
+
+<section class="card center">
+<div class="orb" id="orb"></div>
+<div class="phase" id="phase">Ready to begin</div>
+<div class="count" id="count">—</div>
+<p id="status">Start a breathing session or play the ambient audio.</p>
+
+<div class="controls">
+<button id="start">Start breathing</button>
+<button class="secondary" id="stop" disabled>Stop</button>
+</div>
+
+<audio id="ambient" controls loop preload="auto">
+  <source src="audio/ambient-sanctuary.wav" type="audio/wav">
+  Your browser does not support audio playback.
+</audio>
+<p class="note">Use the audio controls above to play or pause the ambient sound. This activity supports mindfulness and relaxation and is not a medical treatment.</p>
 </section>
 </main>
 <script>
 const $=id=>document.getElementById(id);
-let running=false,timer=null,seconds=0,cycle=0,audioCtx=null,master=null,soundTimer=null,soundOn=false;
-
-function setPhase(){const t=seconds%8;if(t<4){$('phase').textContent='Breathe in';$('count').textContent=4-t}else{$('phase').textContent='Breathe out';$('count').textContent=8-t}if(t===0&&seconds>0){cycle++;$('cycles').textContent=cycle}seconds++}
-$('start').onclick=()=>{if(running)return;running=true;seconds=0;cycle=0;$('cycles').textContent=0;$('orb').classList.add('breathe');$('start').disabled=true;$('stop').disabled=false;setPhase();timer=setInterval(setPhase,1000)}
-$('stop').onclick=()=>{running=false;clearInterval(timer);$('orb').classList.remove('breathe');$('phase').textContent='Session paused';$('count').textContent='—';$('start').disabled=false;$('stop').disabled=true}
-
-function playTone(freq,duration,volume){
-  if(!audioCtx||!master)return;
-  const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();
-  osc.type='sine';osc.frequency.value=freq;
-  gain.gain.setValueAtTime(0.0001,audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(volume,audioCtx.currentTime+.08);
-  gain.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+duration);
-  osc.connect(gain).connect(master);osc.start();osc.stop(audioCtx.currentTime+duration+.05);
+let timer=null,seconds=0,running=false;
+function update(){
+ const t=seconds%8;
+ if(t<4){$('phase').textContent='Breathe in';$('count').textContent=4-t;}
+ else{$('phase').textContent='Breathe out';$('count').textContent=8-t;}
+ seconds++;
 }
-async function startSound(){
- try{
-  audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
-  await audioCtx.resume();
-  master=master||audioCtx.createGain();master.gain.value=.22;master.connect(audioCtx.destination);
-  soundOn=true;$('sound').textContent='🔇 Stop ambient sound';$('audioStatus').textContent='Ambient sound is playing.';
-  playTone(396,1.8,.22);setTimeout(()=>playTone(528,1.8,.16),900);
-  soundTimer=setInterval(()=>{playTone(396,2.2,.13);setTimeout(()=>playTone(528,2,.10),1100)},5000);
- }catch(e){$('audioStatus').textContent='Audio could not start. Check your phone media volume and browser sound settings.'}
-}
-function stopSound(){soundOn=false;clearInterval(soundTimer);$('sound').textContent='🔊 Start ambient sound';$('audioStatus').textContent='Ambient sound stopped.'}
-$('sound').onclick=()=>soundOn?stopSound():startSound();
-</script></main></body></html>
+$('start').onclick=()=>{
+ if(running)return;
+ running=true;seconds=0;$('orb').classList.add('breathe');
+ $('start').disabled=true;$('stop').disabled=false;
+ $('status').textContent='Follow the orb at your own comfortable pace.';
+ update();timer=setInterval(update,1000);
+};
+$('stop').onclick=()=>{
+ running=false;clearInterval(timer);$('orb').classList.remove('breathe');
+ $('phase').textContent='Session paused';$('count').textContent='—';
+ $('start').disabled=false;$('stop').disabled=true;
+ $('status').textContent='Gentle progress: your mindful pause is complete.';
+};
+// Explicit repository home URL. If this opens Motion Lab, the repository root index.html
+// has been replaced and must be restored separately.
+$('homeBtn').onclick=()=>location.href='https://estefanie24.github.io/Argyria/';
+</script>
+</body>
+</html>
