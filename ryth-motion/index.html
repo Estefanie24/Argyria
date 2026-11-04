@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101426">
+  <meta name="description" content="Rhythm of Motion — a mindful movement activity using your phone's motion sensors.">
+  <title>Rhythm of Motion · Argyria</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <a class="back-link" href="../index.html" aria-label="Back to Argyria home">← Argyria</a>
+      <span class="eyebrow">MINDFUL MOVEMENT</span>
+    </header>
+
+    <section class="intro">
+      <div class="orb-mark" aria-hidden="true"><span></span></div>
+      <p class="eyebrow">RHYTHM OF MOTION</p>
+      <h1>Move gently.<br><em>Find your rhythm.</em></h1>
+      <p class="intro-copy">Tilt your phone to guide the light. Breathe slowly, move comfortably, and pause whenever you need.</p>
+    </section>
+
+    <section class="game-card" aria-labelledby="play-title">
+      <div class="game-heading">
+        <div>
+          <p class="eyebrow">YOUR MOVEMENT SPACE</p>
+          <h2 id="play-title">Follow the flow</h2>
+        </div>
+        <span class="session-chip" id="session-state">Ready</span>
+      </div>
+
+      <div class="playfield" id="playfield" aria-label="Movement game area">
+        <div class="field-glow"></div>
+        <div class="orbit orbit-one"></div>
+        <div class="orbit orbit-two"></div>
+        <div class="target" id="target" aria-hidden="true">✦</div>
+        <div class="player" id="player" aria-label="Your light">●</div>
+        <div class="breath-guide" id="breath-guide">
+          <span class="breath-dot"></span>
+          <strong id="breath-word">Breathe in</strong>
+          <small id="breath-hint">Let your shoulders soften</small>
+        </div>
+        <div class="field-caption" id="field-caption">Grant motion access to begin</div>
+      </div>
+
+      <div class="score-row">
+        <div><span class="metric-label">ENERGY SPARKS</span><strong id="score">0</strong></div>
+        <div><span class="metric-label">MINDFUL TIME</span><strong id="elapsed">00:00</strong></div>
+        <div><span class="metric-label">MOVEMENT PULSES</span><strong id="pulses">0</strong></div>
+      </div>
+
+      <div class="controls">
+        <button class="primary-btn" id="start-btn">Enable sensors & start</button>
+        <button class="secondary-btn" id="stop-btn" disabled>Pause</button>
+      </div>
+      <p class="microcopy">Use small, comfortable tilts while seated or standing safely. Do not move around while looking at the screen.</p>
+    </section>
+
+    <section class="sensor-card" aria-labelledby="sensor-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">MIDTERM SENSOR DEMO</p>
+          <h2 id="sensor-title">Live sensor readings</h2>
+        </div>
+        <span class="status-dot" id="sensor-dot"></span>
+      </div>
+      <p class="sensor-summary" id="sensor-summary">Sensors have not been started yet.</p>
+      <div class="sensor-grid">
+        <article class="sensor-tile">
+          <div class="sensor-tile-head"><span>Gyroscope + tilt</span><span id="orientation-state" class="sensor-state">Waiting</span></div>
+          <div class="reading"><span>Rotation X</span><strong id="gx-val">—</strong><small>rad/s</small></div>
+          <div class="reading"><span>Rotation Y</span><strong id="gy-val">—</strong><small>rad/s</small></div>
+          <div class="reading"><span>Rotation Z</span><strong id="gz-val">—</strong><small>rad/s</small></div>
+          <div class="reading"><span>Beta / Gamma</span><strong id="tilt-val">—</strong><small>°</small></div>
+          <p class="sensor-note">Raw rotation rates use the Generic Sensor Gyroscope API when available. Device orientation is the steering fallback and may fuse multiple sensors.</p>
+        </article>
+        <article class="sensor-tile">
+          <div class="sensor-tile-head"><span>Accelerometer</span><span id="motion-state" class="sensor-state">Waiting</span></div>
+          <div class="reading"><span>X</span><strong id="ax-val">—</strong><small>m/s²</small></div>
+          <div class="reading"><span>Y</span><strong id="ay-val">—</strong><small>m/s²</small></div>
+          <div class="reading"><span>Z</span><strong id="az-val">—</strong><small>m/s²</small></div>
+          <p class="sensor-note">Movement intensity triggers a gentle energy pulse. Values use acceleration without gravity when supported, otherwise gravity-included values.</p>
+        </article>
+      </div>
+      <p class="privacy-note">Sensor readings are processed in this page only; this demo does not upload them.</p>
+    </section>
+
+    <section class="howto-card">
+      <p class="eyebrow">HOW TO PLAY</p>
+      <ol>
+        <li>Tap <strong>Enable sensors & start</strong> and allow motion access if prompted.</li>
+        <li>Gently tilt your phone left, right, forward, or back to guide the orb toward the star.</li>
+        <li>Let the breathing guide set a relaxed pace. A distinct gentle movement creates an energy pulse.</li>
+        <li>Pause or stop whenever you like. There is no speed target or penalty.</li>
+      </ol>
+    </section>
+
+    <footer>ARGYRIA · WELLNESS THROUGH GENTLE MOVEMENT</footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
