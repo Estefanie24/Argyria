@@ -1,5 +1,0 @@
-const CACHE='argyria-core-v2';
-const CORE=['./','./index.html','./games.html','./manifest.json','./icon-192.png','./icon-512.png','./nebula.webp','./three.min.js','./motion-lab/','./motion-lab/index.html','./aether-cauldron/','./aether-cauldron/index.html','./zone-runner/','./zone-runner/index.html','./zone-runner/manifest.json','./route-lab/','./route-lab/index.html'];
-self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>Promise.all(CORE.map(p=>c.add(p).catch(()=>null)))).then(()=>self.skipWaiting())));
-self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
-self.addEventListener('fetch',e=>{const r=e.request;if(r.method!=='GET'||new URL(r.url).origin!==location.origin)return;e.respondWith(caches.match(r).then(hit=>hit||fetch(r).then(res=>{if(res.ok){const copy=res.clone();caches.open(CACHE).then(c=>c.put(r,copy));}return res;}).catch(()=>{if(r.mode==='navigate')return caches.match('./index.html');throw new Error('Offline resource unavailable');})));});
