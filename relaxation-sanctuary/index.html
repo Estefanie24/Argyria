@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Argyria | Relaxation Sanctuary</title>
+<style>
+:root{--ink:#eaf7ff;--muted:#aac5d5;--glass:rgba(9,24,43,.68);--accent:#74e8ff;--accent2:#b58cff}
+*{box-sizing:border-box} body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink);
+background:radial-gradient(circle at 50% 20%,#254c72 0,#10223c 38%,#07111f 100%);overflow-x:hidden}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background-image:radial-gradient(circle,rgba(255,255,255,.8) 1px,transparent 1.5px);background-size:52px 52px;opacity:.18}
+main{max-width:720px;margin:auto;padding:20px 16px 36px;position:relative}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px}
+h1{font-size:clamp(1.5rem,6vw,2.4rem);margin:0}.subtitle{color:var(--muted);margin:5px 0 0}
+button{border:0;border-radius:16px;padding:13px 17px;font-weight:700;font-size:1rem;color:#07111f;background:linear-gradient(135deg,var(--accent),#d2f8ff);cursor:pointer}
+button.secondary{background:rgba(255,255,255,.12);color:var(--ink);border:1px solid rgba(255,255,255,.18)}
+.card{background:var(--glass);border:1px solid rgba(170,225,255,.18);box-shadow:0 18px 50px rgba(0,0,0,.22);backdrop-filter:blur(12px);border-radius:26px;padding:22px;margin:15px 0}
+.breath-wrap{display:grid;place-items:center;min-height:330px;text-align:center}
+.orb{width:150px;height:150px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0 3%,#b9f5ff 10%,#65d9ff 36%,#7552d7 70%,#24164d 100%);
+box-shadow:0 0 25px #79e9ff,0 0 75px rgba(113,102,255,.55);transition:transform 4s ease-in-out}
+.orb.breathe{animation:breathe 8s ease-in-out infinite}@keyframes breathe{0%,100%{transform:scale(.78)}50%{transform:scale(1.45)}}
+.phase{font-size:1.55rem;font-weight:800;margin-top:36px}.count{font-size:3rem;font-weight:800;color:#aeefff}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.stat{padding:16px;border-radius:18px;background:rgba(255,255,255,.07)}.stat b{display:block;font-size:1.3rem;color:#bff5ff}
+.note{font-size:.92rem;color:var(--muted);line-height:1.45}.complete{display:none;text-align:center}.complete.show{display:block}
+@media(max-width:420px){main{padding:16px 12px}.card{padding:18px}.breath-wrap{min-height:300px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div><h1>🌙 Relaxation Sanctuary</h1><p class="subtitle">A gentle space for breathing, calm, and mindful pauses.</p></div>
+<button class="secondary" onclick="location.href='../index.html'">← Home</button>
+</header>
+
+<section class="card" id="sessionCard">
+<div class="breath-wrap">
+<div>
+<div class="orb" id="orb"></div>
+<div class="phase" id="phase">Ready to begin</div>
+<div class="count" id="count">—</div>
+</div>
+</div>
+<div class="grid">
+<div class="stat"><b>4 min</b>Recommended calm session</div>
+<div class="stat"><b id="cycles">0</b>Breathing cycles completed</div>
+</div>
+<p class="note">This is a wellness and mindfulness activity, not a medical treatment or diagnostic tool.</p>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+<button id="start">Start breathing</button>
+<button class="secondary" id="sound">♪ Ambient sound: Off</button>
+<button class="secondary" id="stop" disabled>Stop</button>
+</div>
+</section>
+
+<section class="card complete" id="complete">
+<h2>✨ Gentle progress recorded</h2>
+<p>You completed a mindful breathing session. Take this calm moment with you.</p>
+<button onclick="location.href='../index.html'">Return to Argyria</button>
+</section>
+</main>
+<script>
+const orb=document.getElementById('orb'),phase=document.getElementById('phase'),count=document.getElementById('count');
+const start=document.getElementById('start'),stop=document.getElementById('stop'),sound=document.getElementById('sound'),cycles=document.getElementById('cycles');
+let running=false,timer=null,cycle=0,seconds=0,audioCtx=null,osc=null,gain=null,soundOn=false;
+
+function setPhase(){
+  const t=seconds%8;
+  if(t<4){phase.textContent='Breathe in';count.textContent=4-t;}
+  else {phase.textContent='Breathe out';count.textContent=8-t;}
+  if(t===0 && seconds>0){cycle++;cycles.textContent=cycle;}
+  seconds++;
+}
+function begin(){
+  running=true;seconds=0;cycle=0;cycles.textContent=0;orb.classList.add('breathe');
+  start.disabled=true;stop.disabled=false;setPhase();timer=setInterval(setPhase,1000);
+}
+function finish(){
+  running=false;clearInterval(timer);orb.classList.remove('breathe');phase.textContent='Session paused';count.textContent='—';
+  start.disabled=false;stop.disabled=true;saveProgress();stopSound();
+}
+function saveProgress(){
+ try{
+   const key='argyria.relaxation.v1';
+   const data=JSON.parse(localStorage.getItem(key)||'{}');
+   data.sessions=(data.sessions||0)+1;data.lastCompleted=new Date().toISOString();
+   localStorage.setItem(key,JSON.stringify(data));
+ }catch(e){}
+}
+function startSound(){
+ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+ audioCtx.resume();osc=audioCtx.createOscillator();gain=audioCtx.createGain();
+ osc.type='sine';osc.frequency.value=174;gain.gain.value=.025;osc.connect(gain).connect(audioCtx.destination);osc.start();
+ soundOn=true;sound.textContent='♪ Ambient sound: On';
+}
+function stopSound(){
+ if(osc){try{osc.stop()}catch(e){} osc=null;}soundOn=false;sound.textContent='♪ Ambient sound: Off';
+}
+start.onclick=begin;stop.onclick=finish;
+sound.onclick=()=>soundOn?stopSound():startSound();
+</script>
+</body>
+</html>
