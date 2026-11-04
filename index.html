@@ -1,229 +1,536 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#0b0e14">
-<meta name="color-scheme" content="dark">
-<meta name="description" content="Live accelerometer readout: X, Y, Z, Total, a live graph, and highs/lows per axis.">
-<title>Motion Lab</title>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<title>Argyria | Wellness World</title>
+
+<meta name="theme-color" content="#0b1020">
+<meta name="description" content="Argyria is a mobile wellness world combining movement, GPS, relaxation, nutrition and focus activities.">
+
 <style>
-:root{
-  --bg:#0b0e14; --panel:#11161f; --line:#232b3a; --ink:#e7ecf5; --dim:#7c8aa0;
-  --x:#ff5470; --y:#2dd4bf; --z:#ffd23f; --t:#7c9fff;
-  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+:root {
+    --bg: #080d1c;
+    --bg2: #111936;
+    --card: rgba(20, 29, 59, 0.88);
+    --line: rgba(177, 219, 255, 0.18);
+    --text: #edf7ff;
+    --muted: #b3c4d8;
+    --cyan: #75e7ff;
+    --violet: #ae91ff;
+    --gold: #ffe29a;
 }
-*{box-sizing:border-box}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink)}
-body{
-  font:16px/1.4 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;
-  display:flex;flex-direction:column;align-items:center;
-  padding:calc(env(safe-area-inset-top,0px) + 20px) 16px calc(env(safe-area-inset-bottom,0px) + 28px);
+
+* {
+    box-sizing: border-box;
 }
-.wrap{width:100%;max-width:460px;display:flex;flex-direction:column;gap:18px}
-header{display:flex;flex-direction:column;gap:4px}
-h1{margin:0;font-size:26px;font-weight:700;letter-spacing:-.02em}
-h1 span{color:var(--t)}
-.sub{margin:0;color:var(--dim);font-size:14px}
 
-button{font:inherit;cursor:pointer}
-.start{
-  width:100%;padding:16px;border-radius:12px;border:1px solid var(--t);
-  background:var(--t);color:#07101f;font-weight:700;font-size:17px;letter-spacing:-.01em;
+html {
+    scroll-behavior: smooth;
 }
-.start:disabled{opacity:.55}
-.start.live{background:transparent;color:var(--t)}
-#msg{margin:0;min-height:18px;color:var(--dim);font-size:13px}
-#msg.err{color:var(--x)}
 
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
-.panel h2{margin:0 0 10px;font-size:13px;font-weight:600;color:var(--dim);text-transform:none}
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: var(--text);
+    background:
+        radial-gradient(circle at 15% 5%, rgba(75, 108, 188, 0.35), transparent 30%),
+        radial-gradient(circle at 85% 15%, rgba(100, 215, 219, 0.18), transparent 25%),
+        linear-gradient(180deg, var(--bg2), var(--bg));
+}
 
-.channels{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-.ch{border-left:3px solid var(--c);padding-left:10px}
-.ch .lbl{font-size:12px;color:var(--dim);font-family:ui-monospace,Menlo,Consolas,monospace}
-.ch .val{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:clamp(28px,8vw,40px);font-weight:700;font-variant-numeric:tabular-nums;color:var(--c);line-height:1.15}
-.ch .unit{font-size:12px;color:var(--dim);font-weight:400}
-#chX{--c:var(--x)} #chY{--c:var(--y)} #chZ{--c:var(--z)}
+header {
+    padding: 18px 18px 10px;
+    max-width: 1050px;
+    margin: auto;
+}
 
-.total{border-left:3px solid var(--t);padding-left:10px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-.total .val{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:clamp(34px,10vw,48px);font-weight:700;color:var(--t);font-variant-numeric:tabular-nums}
-.total .formula{color:var(--dim);font-size:12px;font-family:ui-monospace,Menlo,Consolas,monospace}
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
 
-canvas#graph{display:block;width:100%;height:150px;border-radius:8px;background:#0d1320}
-.legend{display:flex;gap:14px;margin-top:8px;font-size:12px;color:var(--dim)}
-.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.logo {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    font-size: 25px;
+    background:
+        radial-gradient(circle at 35% 30%, #ffffff, #8deeff 18%, #6253bd 60%, #17102f);
+    box-shadow:
+        0 0 20px rgba(117, 231, 255, 0.6),
+        0 0 50px rgba(123, 91, 255, 0.25);
+}
 
-.mm{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.mm .col{display:flex;flex-direction:column;gap:6px}
-.mm .col .axis{font-size:12px;color:var(--dim);font-weight:600}
-.mm .row{display:flex;justify-content:space-between;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px}
-.mm .row span:last-child{font-variant-numeric:tabular-nums}
-.mm .hi{color:var(--ink)}
-.mm .lo{color:var(--dim)}
+.brand h1 {
+    margin: 0;
+    font-size: 1.3rem;
+    letter-spacing: 0.12em;
+}
 
-.reset{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:14px}
-.reset:active{background:var(--line)}
+.brand p {
+    margin: 3px 0 0;
+    color: var(--muted);
+    font-size: 0.78rem;
+}
 
-footer{color:var(--dim);font-size:12px;text-align:center;padding-top:4px}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
-.argyria-home{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:9999;padding:8px 12px;border:1px solid #7c9fff88;border-radius:999px;background:#11161feF;color:#e7ecf5;text-decoration:none;font-size:13px;font-weight:700}
-</style></head>
+main {
+    width: min(100%, 1050px);
+    margin: auto;
+    padding: 8px 18px 50px;
+}
+
+.hero {
+    position: relative;
+    overflow: hidden;
+    padding: 48px 24px;
+    margin: 10px 0 30px;
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    background:
+        radial-gradient(circle at 75% 30%, rgba(100, 223, 255, 0.25), transparent 22%),
+        radial-gradient(circle at 82% 70%, rgba(138, 102, 255, 0.28), transparent 28%),
+        linear-gradient(135deg, rgba(29, 48, 87, 0.92), rgba(17, 15, 43, 0.95));
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.hero::after {
+    content: "✦";
+    position: absolute;
+    right: 8%;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: clamp(100px, 22vw, 220px);
+    color: rgba(138, 234, 255, 0.08);
+    text-shadow: 0 0 50px rgba(117, 231, 255, 0.35);
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 650px;
+}
+
+.eyebrow {
+    color: var(--cyan);
+    font-size: 0.76rem;
+    letter-spacing: 0.16em;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.hero h2 {
+    margin: 10px 0;
+    font-size: clamp(2.1rem, 8vw, 4.4rem);
+    line-height: 1;
+    color: var(--gold);
+}
+
+.hero p {
+    max-width: 580px;
+    color: #d5e3f1;
+    line-height: 1.65;
+    font-size: 1rem;
+}
+
+.hero-button {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 13px 20px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--cyan), #d5fbff);
+    color: #07111f;
+    text-decoration: none;
+    font-weight: 800;
+}
+
+.section-title {
+    margin: 32px 0 14px;
+}
+
+.section-title h2 {
+    margin: 0;
+    font-size: 1.55rem;
+    color: var(--gold);
+}
+
+.section-title p {
+    color: var(--muted);
+    margin: 5px 0 0;
+    line-height: 1.5;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    min-height: 265px;
+    padding: 20px;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background:
+        linear-gradient(145deg, rgba(29, 42, 79, 0.92), rgba(12, 18, 39, 0.95));
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.22);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(117, 231, 255, 0.55);
+}
+
+.icon {
+    width: 58px;
+    height: 58px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 18px;
+    border-radius: 18px;
+    font-size: 29px;
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 0 20px rgba(117, 231, 255, 0.08);
+}
+
+.card h3 {
+    margin: 0 0 8px;
+    font-size: 1.25rem;
+    color: var(--text);
+}
+
+.card p {
+    flex-grow: 1;
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1.55;
+}
+
+.tags {
+    margin: 14px 0;
+}
+
+.tag {
+    display: inline-block;
+    margin: 3px 3px 0 0;
+    padding: 5px 8px;
+    border-radius: 99px;
+    background: rgba(117, 231, 255, 0.1);
+    border: 1px solid rgba(117, 231, 255, 0.16);
+    color: #bcefff;
+    font-size: 0.7rem;
+}
+
+.open-button {
+    display: block;
+    padding: 11px;
+    border-radius: 12px;
+    text-align: center;
+    text-decoration: none;
+    font-weight: 800;
+    color: #07111f;
+    background: linear-gradient(135deg, #80eaff, #d8faff);
+}
+
+.open-button.violet {
+    background: linear-gradient(135deg, #b8a0ff, #e4dcff);
+}
+
+.open-button.gold {
+    background: linear-gradient(135deg, #ffe39b, #fff4d4);
+}
+
+.tech-section {
+    margin-top: 30px;
+    padding: 24px;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    background: rgba(12, 19, 42, 0.75);
+}
+
+.tech-section h2 {
+    margin-top: 0;
+    color: var(--gold);
+}
+
+.tech-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.tech {
+    padding: 15px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tech strong {
+    display: block;
+    color: var(--cyan);
+    margin-bottom: 6px;
+}
+
+.tech span {
+    color: var(--muted);
+    font-size: 0.85rem;
+    line-height: 1.45;
+}
+
+footer {
+    max-width: 1050px;
+    margin: auto;
+    padding: 25px 18px 40px;
+    text-align: center;
+    color: #8294aa;
+    font-size: 0.8rem;
+}
+
+@media (max-width: 800px) {
+    .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 540px) {
+    .hero {
+        padding: 38px 20px;
+    }
+
+    .grid,
+    .tech-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .card {
+        min-height: 230px;
+    }
+
+    .hero h2 {
+        font-size: 2.5rem;
+    }
+}
+</style>
+</head>
+
 <body>
-<a class="argyria-home" href="../index.html" aria-label="Return to Argyria home">✦ Argyria</a>
-<div class="wrap">
-  <header>
-    <h1>Motion <span>Lab</span></h1>
-    <p class="sub">Real-time accelerometer, gyroscope, orientation and GPS diagnostics.</p>
-  </header>
 
-  <button id="startBtn" class="start">Start Sensor Tests</button>
-  <button id="stopBtn" class="reset" disabled>Stop Sensors</button>
-  <p id="msg" role="status" aria-live="polite">Start sensors to request permissions and begin live measurements.</p>
-  <section class="panel"><h2>Sensor availability</h2><div class="channels" style="grid-template-columns:repeat(3,1fr)">
-    <div><strong>Accelerometer</strong><p id="accStatus">Waiting</p></div><div><strong>Gyroscope</strong><p id="gyroStatus">Waiting</p></div><div><strong>GPS</strong><p id="gpsStatus">Waiting</p></div>
-  </div></section>
-
-  <section class="panel">
-    <h2>Live values (m/s&sup2;)</h2>
-    <div class="channels">
-      <div class="ch" id="chX"><div class="lbl">X</div><div class="val" id="vx">0.00</div></div>
-      <div class="ch" id="chY"><div class="lbl">Y</div><div class="val" id="vy">0.00</div></div>
-      <div class="ch" id="chZ"><div class="lbl">Z</div><div class="val" id="vz">0.00</div></div>
+<header>
+    <div class="brand">
+        <div class="logo">✦</div>
+        <div>
+            <h1>ARGYRIA</h1>
+            <p>Mobile Wellness World</p>
+        </div>
     </div>
-  </section>
+</header>
 
-  <section class="panel">
-    <div class="total">
-      <div>
-        <div class="lbl" style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--dim)">TOTAL</div>
-        <div class="val" id="vt">0.00</div>
-      </div>
-      <div class="formula">&radic;(x&sup2; + y&sup2; + z&sup2;)</div>
+<main>
+
+<section class="hero">
+    <div class="hero-content">
+        <div class="eyebrow">Move · Explore · Focus · Relax</div>
+        <h2>Welcome to Argyria</h2>
+        <p>
+            A mobile wellness world that combines smartphone technology,
+            interactive games, movement, nutrition, concentration, and
+            relaxation into one connected experience.
+        </p>
+        <a class="hero-button" href="#experiences">
+            Explore the wellness world ✦
+        </a>
     </div>
-  </section>
+</section>
 
-  <section class="panel"><h2>Gyroscope rotation rate (°/s)</h2><div class="channels">
-    <div class="ch" style="--c:#ff5470"><div class="lbl">X / alpha</div><div class="val" id="rx">—</div></div>
-    <div class="ch" style="--c:#2dd4bf"><div class="lbl">Y / beta</div><div class="val" id="ry">—</div></div>
-    <div class="ch" style="--c:#ffd23f"><div class="lbl">Z / gamma</div><div class="val" id="rz">—</div></div>
-  </div><p class="sub" id="orientation">Orientation: waiting for readings</p></section>
-  <section class="panel"><h2>GPS position</h2><div class="channels" style="grid-template-columns:1fr 1fr">
-    <div><div class="lbl">Latitude</div><strong id="lat">—</strong></div><div><div class="lbl">Longitude</div><strong id="lon">—</strong></div>
-    <div><div class="lbl">Accuracy</div><strong id="accuracy">—</strong></div><div><div class="lbl">Altitude</div><strong id="altitude">—</strong></div>
-    <div><div class="lbl">Speed</div><strong id="speed">—</strong></div><div><div class="lbl">GPS updates</div><strong id="gpsCount">0</strong></div>
-  </div><p class="sub" id="gpsTime">No GPS fix yet</p></section>
-  <section class="panel"><h2>Movement estimate</h2><div class="channels" style="grid-template-columns:1fr 1fr">
-    <div><div class="lbl">Detected steps*</div><div class="val" id="steps">0</div></div><div><div class="lbl">Motion intensity</div><div class="val" id="intensity">—</div></div>
-  </div><p class="sub">*Experimental estimate from acceleration peaks; validate against a manual count. Not a medical measurement.</p></section>
-  <section class="panel">
-    <h2>Live graph</h2>
-    <canvas id="graph"></canvas>
-    <div class="legend">
-      <span><i style="background:var(--x)"></i>X</span>
-      <span><i style="background:var(--y)"></i>Y</span>
-      <span><i style="background:var(--z)"></i>Z</span>
-    </div>
-  </section>
 
-  <section class="panel">
-    <h2>Highest / lowest</h2>
-    <div class="mm">
-      <div class="col"><div class="axis" style="color:var(--x)">X</div>
-        <div class="row"><span class="hi">High</span><span id="xhi">0.00</span></div>
-        <div class="row"><span class="lo">Low</span><span id="xlo">0.00</span></div></div>
-      <div class="col"><div class="axis" style="color:var(--y)">Y</div>
-        <div class="row"><span class="hi">High</span><span id="yhi">0.00</span></div>
-        <div class="row"><span class="lo">Low</span><span id="ylo">0.00</span></div></div>
-      <div class="col"><div class="axis" style="color:var(--z)">Z</div>
-        <div class="row"><span class="hi">High</span><span id="zhi">0.00</span></div>
-        <div class="row"><span class="lo">Low</span><span id="zlo">0.00</span></div></div>
-    </div>
-  </section>
+<section id="experiences">
 
-  <button id="resetBtn" class="reset">Reset highs / lows &amp; graph</button>
-  <footer>Requires HTTPS and device/browser sensor support. GPS and motion permissions are requested when you start. Values depend on hardware and browser support.</footer>
+<div class="section-title">
+    <h2>Your Wellness Experiences</h2>
+    <p>Choose an activity and explore Argyria at your own pace.</p>
 </div>
 
-<script>
-const $=id=>document.getElementById(id), f2=n=>Number.isFinite(n)?n.toFixed(2):'—';
-let motionHandler=null, orientationHandler=null, gpsWatch=null, running=false, gpsUpdates=0, steps=0, lastStep=0, lastPeak=0;
-let raw={x:0,y:0,z:0,t:0}, mm={x:[Infinity,-Infinity],y:[Infinity,-Infinity],z:[Infinity,-Infinity]}, hist=[];
-const MAXHIST=140;
-function status(id,text,kind=''){const e=$(id);e.textContent=text;e.style.color=kind==='ok'?'#2dd4bf':kind==='bad'?'#ff5470':'#7c8aa0';}
-function drawGraph(){const cv=$('graph'),r=cv.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);if(cv.width!==Math.round(r.width*dpr)||cv.height!==Math.round(r.height*dpr)){cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr);}const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,r.width,r.height);g.strokeStyle='#1b2433';g.beginPath();g.moveTo(0,r.height/2);g.lineTo(r.width,r.height/2);g.stroke();const cols={x:'#ff5470',y:'#2dd4bf',z:'#ffd23f'};for(const k of Object.keys(cols)){g.strokeStyle=cols[k];g.lineWidth=2;g.beginPath();hist.forEach((v,i)=>{const x=i/Math.max(1,MAXHIST-1)*r.width,y=r.height/2-v[k]*(r.height/2/20);i?g.lineTo(x,y):g.moveTo(x,y)});g.stroke();}}
-function onMotion(e){const a=e.accelerationIncludingGravity||e.acceleration;if(a&&[a.x,a.y,a.z].every(v=>Number.isFinite(v))){raw.x=a.x;raw.y=a.y;raw.z=a.z;raw.t=Math.hypot(a.x,a.y,a.z);$('vx').textContent=f2(a.x);$('vy').textContent=f2(a.y);$('vz').textContent=f2(a.z);$('vt').textContent=f2(raw.t);for(const k of ['x','y','z']){mm[k][0]=Math.min(mm[k][0],raw[k]);mm[k][1]=Math.max(mm[k][1],raw[k]);$(k+'hi').textContent=f2(mm[k][1]);$(k+'lo').textContent=f2(mm[k][0]);}hist.push({...raw});if(hist.length>MAXHIST)hist.shift();$('intensity').textContent=f2(Math.hypot(e.acceleration?.x||0,e.acceleration?.y||0,e.acceleration?.z||0))+' m/s²';status('accStatus','Receiving readings','ok');
-// Simple peak-based step estimate; threshold/cooldown are intentionally conservative and require device validation.
-const linear=e.acceleration;if(linear&&[linear.x,linear.y,linear.z].every(Number.isFinite)){const mag=Math.hypot(linear.x,linear.y,linear.z),now=Date.now();if(mag>1.25&&lastPeak<=1.25&&now-lastStep>350){steps++;lastStep=now;$('steps').textContent=steps;}lastPeak=mag;}}
-const rr=e.rotationRate;if(rr&&[rr.alpha,rr.beta,rr.gamma].some(Number.isFinite)){ $('rx').textContent=f2(rr.alpha);$('ry').textContent=f2(rr.beta);$('rz').textContent=f2(rr.gamma);status('gyroStatus','Receiving rotation rate','ok');}drawGraph();}
-function onOrientation(e){const vals=[e.alpha,e.beta,e.gamma];if(vals.some(Number.isFinite)){$('orientation').textContent=`Orientation — alpha: ${f2(e.alpha)}°, beta: ${f2(e.beta)}°, gamma: ${f2(e.gamma)}°`;if($('gyroStatus').textContent==='Waiting')status('gyroStatus','Orientation only; rotation rate unconfirmed');}}
-function onGPS(pos){const c=pos.coords;gpsUpdates++;$('lat').textContent=f2(c.latitude);$('lon').textContent=f2(c.longitude);$('accuracy').textContent=`${f2(c.accuracy)} m`;$('altitude').textContent=c.altitude==null?'Unavailable':`${f2(c.altitude)} m`;$('speed').textContent=c.speed==null?'Unavailable':`${f2(c.speed*3.6)} km/h`;$('gpsCount').textContent=gpsUpdates;$('gpsTime').textContent='Last fix: '+new Date(pos.timestamp).toLocaleTimeString();status('gpsStatus',`Fix received (±${Math.round(c.accuracy)} m)`,'ok');}
-function gpsError(err){status('gpsStatus',({1:'Permission denied',2:'Position unavailable',3:'GPS request timed out'})[err.code]||'GPS error','bad');$('gpsTime').textContent=err.message||'Check location permission and HTTPS.';}
-function stop(){if(!running)return;running=false;if(motionHandler)removeEventListener('devicemotion',motionHandler);if(orientationHandler)removeEventListener('deviceorientation',orientationHandler);if(gpsWatch!==null&&navigator.geolocation)navigator.geolocation.clearWatch(gpsWatch);motionHandler=orientationHandler=null;gpsWatch=null;$('startBtn').disabled=false;$('startBtn').textContent='Start Sensor Tests';$('startBtn').classList.remove('live');$('stopBtn').disabled=true;$('msg').textContent='Sensors stopped. Readings above are the last received values.';}
-async function start(){
-  if(running)return;
-  $('startBtn').disabled=true;
-  $('msg').classList.remove('err');
-  $('msg').textContent='Starting sensor tests…';
+<div class="grid">
 
-  // Motion permission is required on some iOS browsers. Most Android browsers
-  // expose DeviceMotion directly and do not implement requestPermission().
-  if(typeof DeviceMotionEvent==='undefined'){
-    status('accStatus','Not supported by this browser','bad');
-  }else{
-    let motionAllowed=true;
-    if(typeof DeviceMotionEvent.requestPermission==='function'){
-      try{
-        const p=await DeviceMotionEvent.requestPermission();
-        motionAllowed=(p==='granted');
-      }catch(e){motionAllowed=false;}
-    }
-    if(motionAllowed){
-      motionHandler=onMotion;
-      addEventListener('devicemotion',motionHandler);
-      status('accStatus','Waiting for first reading');
-      status('gyroStatus','Waiting for rotation-rate data');
-    }else{
-      status('accStatus','Motion permission not granted','bad');
-      status('gyroStatus','Motion permission not granted','bad');
-    }
-  }
+    <!-- Motion Lab -->
+    <article class="card">
+        <div class="icon">📱</div>
+        <h3>Motion Lab</h3>
+        <p>
+            Explore real-time smartphone sensor data and see how your
+            device detects movement and orientation.
+        </p>
+        <div class="tags">
+            <span class="tag">Accelerometer</span>
+            <span class="tag">Gyroscope</span>
+            <span class="tag">GPS</span>
+        </div>
+        <a class="open-button" href="motion-lab/">
+            Open Motion Lab
+        </a>
+    </article>
 
-  // Orientation is independent of motion. A failure here must not stop GPS.
-  if(typeof DeviceOrientationEvent!=='undefined'){
-    let orientationAllowed=true;
-    if(typeof DeviceOrientationEvent.requestPermission==='function'){
-      try{
-        const p=await DeviceOrientationEvent.requestPermission();
-        orientationAllowed=(p==='granted');
-      }catch(e){orientationAllowed=false;}
-    }
-    if(orientationAllowed){
-      orientationHandler=onOrientation;
-      addEventListener('deviceorientation',orientationHandler);
-    }else if(!motionHandler){
-      status('gyroStatus','Orientation permission not granted','bad');
-    }
-  }
 
-  // GPS is independent of motion sensors.
-  if(navigator.geolocation){
-    gpsWatch=navigator.geolocation.watchPosition(
-      onGPS,gpsError,
-      {enableHighAccuracy:true,maximumAge:1000,timeout:15000}
-    );
-    status('gpsStatus','Requesting location');
-  }else{
-    status('gpsStatus','GPS not supported by this browser','bad');
-  }
+    <!-- Route Lab -->
+    <article class="card">
+        <div class="icon">🗺️</div>
+        <h3>Route Lab</h3>
+        <p>
+            Connect real-world movement with GPS tracking, routes,
+            distance, and outdoor exploration.
+        </p>
+        <div class="tags">
+            <span class="tag">GPS</span>
+            <span class="tag">Movement</span>
+        </div>
+        <a class="open-button violet" href="route-lab/">
+            Open Route Lab
+        </a>
+    </article>
 
-  running=true;
-  $('startBtn').textContent='Sensors live';
-  $('startBtn').classList.add('live');
-  $('stopBtn').disabled=false;
-  $('msg').textContent='Move and rotate the phone. Allow location access for GPS. Each sensor is tested independently.';
-}
-$('startBtn').addEventListener('click',start);$('stopBtn').addEventListener('click',stop);
-$('resetBtn').addEventListener('click',()=>{mm={x:[Infinity,-Infinity],y:[Infinity,-Infinity],z:[Infinity,-Infinity]};hist=[];steps=0;lastStep=0;$('steps').textContent='0';for(const k of ['x','y','z']){$(k+'hi').textContent=$(k+'lo').textContent='—';}drawGraph();});
-addEventListener('resize',drawGraph);addEventListener('pagehide',stop);document.addEventListener('visibilitychange',()=>{if(document.hidden&&running){/* Keep watch active; browsers may throttle background sensors. */}});drawGraph();
-</script>
-<style>#argyria-home-return{position:fixed;z-index:99999;top:calc(10px + env(safe-area-inset-top));left:10px;padding:9px 12px;border:1px solid #d8c48c99;border-radius:12px;background:#100d20eF;color:#f3dfaa;text-decoration:none;font:600 12px system-ui;box-shadow:0 5px 18px #0008;backdrop-filter:blur(10px)}body{scroll-padding-top:60px}</style><a id="argyria-home-return" href="../index.html">✧ Argyria Home</a></body></html>
+
+    <!-- Rhythm of Motion -->
+    <article class="card">
+        <div class="icon">🎵</div>
+        <h3>Rhythm of Motion</h3>
+        <p>
+            Turn movement into gameplay through an active rhythm
+            experience designed to encourage physical activity.
+        </p>
+        <div class="tags">
+            <span class="tag">Motion</span>
+            <span class="tag">Coordination</span>
+        </div>
+        <a class="open-button" href="rhythm-motion/">
+            Play Rhythm of Motion
+        </a>
+    </article>
+
+
+    <!-- Nutrition Quest -->
+    <article class="card">
+        <div class="icon">🍎</div>
+        <h3>Nutrition Quest</h3>
+        <p>
+            Learn and explore nutrition concepts through interactive
+            challenges and playful decision-making.
+        </p>
+        <div class="tags">
+            <span class="tag">Nutrition</span>
+            <span class="tag">Learning</span>
+        </div>
+        <a class="open-button gold" href="nutrition-quest/">
+            Start Nutrition Quest
+        </a>
+    </article>
+
+
+    <!-- Crystal Focus -->
+    <article class="card">
+        <div class="icon">💎</div>
+        <h3>Crystal Focus</h3>
+        <p>
+            A calm cognitive activity designed to support concentration,
+            attention, and mindful engagement.
+        </p>
+        <div class="tags">
+            <span class="tag">Focus</span>
+            <span class="tag">Attention</span>
+        </div>
+        <a class="open-button violet" href="crystal-focus/">
+            Enter Crystal Focus
+        </a>
+    </article>
+
+
+    <!-- Relaxation Sanctuary -->
+    <article class="card">
+        <div class="icon">🌙</div>
+        <h3>Relaxation Sanctuary</h3>
+        <p>
+            Take a mindful pause with guided breathing and a peaceful
+            environment designed for relaxation.
+        </p>
+        <div class="tags">
+            <span class="tag">Breathing</span>
+            <span class="tag">Relaxation</span>
+        </div>
+        <a class="open-button" href="relaxation-sanctuary/">
+            Enter the Sanctuary
+        </a>
+    </article>
+
+
+    <!-- Zone Runner -->
+    <article class="card">
+        <div class="icon">🏃</div>
+        <h3>Zone Runner</h3>
+        <p>
+            An interactive movement experience that adds an active
+            game element to the Argyria wellness world.
+        </p>
+        <div class="tags">
+            <span class="tag">Active Play</span>
+            <span class="tag">Movement</span>
+        </div>
+        <a class="open-button gold" href="zone-runner/">
+            Play Zone Runner
+        </a>
+    </article>
+
+</div>
+</section>
+
+
+<section class="tech-section">
+
+<h2>Technology Behind Argyria</h2>
+
+<div class="tech-grid">
+
+    <div class="tech">
+        <strong>📱 Accelerometer</strong>
+        <span>
+            Detects changes in movement and acceleration to support
+            interactive motion experiences.
+        </span>
+    </div>
+
+    <div class="tech">
+        <strong>🧭 Gyroscope</strong>
+        <span>
+            Detects device orientation and rotation, allowing the
+            phone to become part of the interaction.
+        </span>
+    </div>
+
+    <div class="tech">
+        <strong>📍 GPS</strong>
+        <span>
+            Connects Argyria with real-world location and outdoor
+            movement through Route Lab.
+        </span>
+    </div>
+
+</div>
+
+</section>
+
+</main>
+
+<footer>
+    ARGYRIA · Mobile Wellness World<br>
+    Wellness and educational prototype — not a medical device.
+</footer>
+
+</body>
+</html>
