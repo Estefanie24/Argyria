@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101426">
+  <title>Rhythm of Motion · Argyria</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0c1020;
+      --panel: rgba(24, 30, 55, 0.9);
+      --line: rgba(185, 198, 255, 0.2);
+      --text: #f2f4ff;
+      --muted: #a8b0d2;
+      --mint: #9df5df;
+      --lavender: #b9a8ff;
+      --pink: #ffb7df;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100vh; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, sans-serif; touch-action: manipulation; }
+    
+    body {
+      background: 
+        radial-gradient(circle at 20% 10%, rgba(98, 80, 178, 0.3), transparent 40%),
+        radial-gradient(circle at 80% 90%, rgba(45, 155, 163, 0.2), transparent 40%),
+        linear-gradient(160deg, #0c1020, #13152b 60%, #0b1324);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+    }
+
+    #home-btn {
+      position: fixed; top: 12px; right: 12px; z-index: 50;
+      border: 1px solid rgba(157, 245, 223, 0.45);
+      background: rgba(12, 16, 32, 0.95); color: #fff;
+      padding: 8px 12px; border-radius: 12px;
+      font-weight: 700; cursor: pointer; font-size: 0.85rem;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      backdrop-filter: blur(8px);
+    }
+
+    .app-shell { width: 100%; max-width: 480px; padding-top: 36px; padding-bottom: 24px; }
+
+    header { text-align: center; margin-bottom: 16px; }
+    .eyebrow { color: var(--mint); font-size: 0.65rem; letter-spacing: 0.2em; font-weight: 800; margin-bottom: 4px; text-transform: uppercase; }
+    h1 { font-size: 1.8rem; letter-spacing: -0.03em; color: #fff; }
+    h1 span { color: var(--mint); }
+    p.subtitle { color: var(--muted); font-size: 0.88rem; margin-top: 4px; }
+
+    /* Permission Overlay */
+    #unlock-overlay {
+      position: fixed; inset: 0; background: rgba(12, 16, 32, 0.96);
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; z-index: 100; padding: 24px; text-align: center;
+      backdrop-filter: blur(12px);
+    }
+    #unlock-overlay h2 { color: var(--mint); font-size: 1.6rem; margin-bottom: 10px; }
+    #unlock-overlay p { color: var(--muted); font-size: 0.95rem; max-width: 320px; line-height: 1.5; margin-bottom: 20px; }
+    
+    .start-btn {
+      background: linear-gradient(100deg, var(--mint), #c2f8ec);
+      color: #11162b; border: 0; padding: 16px 32px; font-size: 1.05rem;
+      font-weight: 800; border-radius: 99px; cursor: pointer;
+      box-shadow: 0 0 30px rgba(157, 245, 223, 0.4);
+      transition: transform 0.1s ease;
+    }
+    .start-btn:active { transform: scale(0.96); }
+
+    /* Game Playfield */
+    .game-card {
+      background: var(--panel); border: 1px solid var(--line);
+      border-radius: 24px; padding: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      backdrop-filter: blur(12px); margin-bottom: 14px;
+    }
+    
+    #playfield {
+      position: relative; width: 100%; height: 320px;
+      background: radial-gradient(circle at center, rgba(77,93,153,0.3), transparent 60%), linear-gradient(145deg, #121b38, #15142e);
+      border: 1px solid rgba(185, 198, 255, 0.25); border-radius: 18px;
+      overflow: hidden; isolation: isolate; margin-bottom: 14px;
+    }
+    
+    .field-glow { position: absolute; inset: 0; opacity: 0.6; background-image: radial-gradient(1px 1px at 25% 30%, #fff 90%, transparent), radial-gradient(1px 1px at 75% 70%, var(--lavender) 90%, transparent); pointer-events: none; }
+    
+    .target {
+      position: absolute; left: 75%; top: 30%; transform: translate(-50%, -50%);
+      color: var(--pink); font-size: 2.2rem; text-shadow: 0 0 20px rgba(255,183,223,0.9);
+      transition: left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    
+    #player {
+      position: absolute; left: 50%; top: 50%; width: 40px; height: 40px;
+      border-radius: 50%; transform: translate(-50%, -50%);
+      background: radial-gradient(circle at 35% 30%, #fff, var(--mint) 25%, #8c91ff 70%);
+      box-shadow: 0 0 20px rgba(157,245,223,0.8), 0 0 40px rgba(157,245,223,0.3);
+      z-index: 3; will-change: left, top;
+    }
+    #player::after {
+      content: ""; position: absolute; inset: -8px; border: 1px solid rgba(157,245,223,0.4); border-radius: 50%; animation: pulse-ring 2s infinite;
+    }
+    @keyframes pulse-ring { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.4); opacity: 0; } }
+
+    .field-caption { position: absolute; left: 10px; right: 10px; bottom: 10px; text-align: center; color: var(--muted); font-size: 0.72rem; pointer-events: none; }
+
+    /* Metrics Scoreboard */
+    .score-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; }
+    .score-box { background: rgba(255,255,255,0.04); border: 1px solid var(--line); border-radius: 14px; padding: 10px; text-align: center; }
+    .metric-label { display: block; color: var(--muted); font-size: 0.6rem; letter-spacing: 0.1em; font-weight: 800; margin-bottom: 4px; text-transform: uppercase; }
+    .score-row strong { font-size: 1.4rem; font-variant-numeric: tabular-nums; color: var(--mint); }
+
+    /* Telemetry Panel */
+    .sensor-card { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 14px; font-size: 0.78srem; backdrop-filter: blur(12px); }
+    .sensor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: 700; font-size: 0.82rem; }
+    .sensor-status { font-size: 0.7rem; color: var(--muted); }
+    .sensor-status.ok { color: var(--mint); }
+    .sensor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; color: var(--muted); font-size: 0.75rem; }
+    .sensor-item { background: rgba(0,0,0,0.2); padding: 6px 10px; border-radius: 10px; display: flex; justify-content: space-between; }
+    .sensor-item span:last-child { color: #fff; font-variant-numeric: tabular-nums; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+  <button id="home-btn" type="button" aria-label="Return to Argyria menu">← Argyria Menu</button>
+
+  <div id="unlock-overlay">
+    <div class="eyebrow">Mindful Movement Game</div>
+    <h2>Rhythm of Motion</h2>
+    <p>Tap below to activate device motion sensors and immersive audio feedback.</p>
+    <button class="start-btn" id="unlock-btn">Enable Sensors & Start</button>
+  </div>
+
+  <div class="app-shell">
+    <header>
+      <div class="eyebrow">Argyria Wellness</div>
+      <h1>Rhythm of <span>Motion</span></h1>
+      <p class="subtitle">Tilt your phone gently to guide the energy light.</p>
+    </header>
+
+    <section class="game-card">
+      <div id="playfield" aria-label="Movement game area">
+        <div class="field-glow"></div>
+        <div class="target" id="target" aria-hidden="true">✦</div>
+        <div class="player" id="player" aria-label="Your light">●</div>
+        <div class="field-caption" id="field-caption">Tilt phone left, right, forward, or back</div>
+      </div>
+
+      <div class="score-row">
+        <div class="score-box">
+          <span class="metric-label">Energy Sparks</span>
+          <strong id="score">0</strong>
+        </div>
+        <div class="score-box">
+          <span class="metric-label">Motion Pulses</span>
+          <strong id="pulses">0</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="sensor-card">
+      <div class="sensor-header">
+        <span>Live Sensor Telemetry</span>
+        <span id="overall-status" class="sensor-status">Waiting for input</span>
+      </div>
+      <div class="sensor-grid">
+        <div class="sensor-item"><span>Beta (Pitch)</span><span id="beta-val">—</span></div>
+        <div class="sensor-item"><span>Gamma (Roll)</span><span id="gamma-val">—</span></div>
+        <div class="sensor-item"><span>Accel X</span><span id="ax-val">—</span></div>
+        <div class="sensor-item"><span>Accel Y</span><span id="ay-val">—</span></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    let audioCtx = null;
+    let score = 0, pulses = 0;
+    let playerX = 50, playerY = 50;
+    let targetX = 75, targetY = 30;
+    let lastPulseAt = 0;
+
+    const player = document.getElementById("player");
+    const target = document.getElementById("target");
+    const scoreEl = document.getElementById("score");
+    const pulsesEl = document.getElementById("pulses");
+    const betaVal = document.getElementById("beta-val");
+    const gammaVal = document.getElementById("gamma-val");
+    const axVal = document.getElementById("ax-val");
+    const ayVal = document.getElementById("ay-val");
+    const overallStatus = document.getElementById("overall-status");
+    const caption = document.getElementById("field-caption");
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+      }
+    }
+
+    function playTone(freq, duration = 0.15, type = "sine") {
+      if (!audioCtx) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function handleOrientation(e) {
+      if (e.beta == null && e.gamma == null) return;
+      overallStatus.textContent = "Sensors Active";
+      overallStatus.className = "sensor-status ok";
+
+      let gamma = e.gamma || 0; // Left / Right roll (-90 to 90)
+      let beta = e.beta || 0;   // Forward / Back pitch (-180 to 180)
+
+      // Map tilt smoothly to playfield percentages
+      playerX = Math.max(8, Math.min(92, 50 + gamma * 1.3));
+      playerY = Math.max(8, Math.min(92, 50 + (beta - 25) * 1.1));
+
+      player.style.left = playerX + "%";
+      player.style.top = playerY + "%";
+
+      betaVal.textContent = beta.toFixed(1) + "°";
+      gammaVal.textContent = gamma.toFixed(1) + "°";
+
+      checkTargetHit();
+    }
+
+    function handleMotion(e) {
+      const acc = e.acceleration || e.accelerationIncludingGravity;
+      if (!acc || acc.x == null) return;
+
+      axVal.textContent = (acc.x || 0).toFixed(1);
+      ayVal.textContent = (acc.y || 0).toFixed(1);
+
+      let magnitude = Math.sqrt((acc.x || 0)**2 + (acc.y || 0)**2 + (acc.z || 0)**2);
+      let now = Date.now();
+
+      // Trigger motion pulse feedback on sharp hand movement
+      if (magnitude > 14 && now - lastPulseAt > 1200) {
+        lastPulseAt = now;
+        pulses++;
+        pulsesEl.textContent = pulses;
+        playTone(220, 0.25, "triangle");
+        caption.textContent = "✨ Energy pulse detected!";
+        setTimeout(() => { caption.textContent = "Tilt phone left, right, forward, or back"; }, 1500);
+      }
+    }
+
+    function checkTargetHit() {
+      let dx = playerX - targetX;
+      let dy = playerY - targetY;
+      if (Math.hypot(dx, dy) < 11) {
+        score++;
+        scoreEl.textContent = score;
+        playTone(659.25, 0.2); // E5 Chime
+        
+        // Relocate target randomly within bounds
+        targetX = 20 + Math.random() * 60;
+        targetY = 20 + Math.random() * 60;
+        target.style.left = targetX + "%";
+        target.style.top = targetY + "%";
+      }
+    }
+
+    async function startApp() {
+      initAudio();
+      playTone(440, 0.1);
+
+      // Request iOS 13+ Motion Permissions
+      if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
+        try {
+          const response = await DeviceOrientationEvent.requestPermission();
+          if (response === "granted") {
+            window.addEventListener("deviceorientation", handleOrientation);
+            window.addEventListener("devicemotion", handleMotion);
+          } else {
+            alert("Sensor permission was denied.");
+          }
+        } catch (err) {
+          alert("Could not initialize motion sensors.");
+        }
+      } else {
+        // Standard Android & Desktop listeners
+        window.addEventListener("deviceorientation", handleOrientation);
+        window.addEventListener("devicemotion", handleMotion);
+      }
+
+      document.getElementById("unlock-overlay").style.display = "none";
+    }
+
+    document.getElementById("unlock-btn").addEventListener("click", startApp);
+
+    // Navigation back to Argyria Menu
+    document.getElementById("home-btn").addEventListener("click", () => {
+      window.location.href = "https://estefanie24.github.io/Argyria/";
+    });
+  </script>
+</body>
+</html>
