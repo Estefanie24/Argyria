@@ -237,18 +237,18 @@ audio {
     </p>
 
     <div class="controls">
-        <button id="start">
-            Start breathing
-        </button>
+    <button id="start">
+        Start breathing
+    </button>
 
-        <button id="motionBtn" class="secondary">
-            ✨ Enable motion sparkles
-        </button>
+    <button id="motionBtn" class="secondary">
+        ✨ Enable motion sparkles
+    </button>
 
-        <button class="secondary" id="stop" disabled>
-            Stop
-        </button>
-    </div>
+    <button class="secondary" id="stop" disabled>
+        Stop
+    </button>
+</div>
 
     <audio id="ambient" controls loop preload="auto">
         <source
@@ -479,6 +479,10 @@ $("homeBtn").onclick = () => {
     window.location.href =
         "https://estefanie24.github.io/Argyria/";
 };
+    document.getElementById("motionBtn").addEventListener(
+    "click",
+    enableMotion
+);
 </script>
 
 </body>
