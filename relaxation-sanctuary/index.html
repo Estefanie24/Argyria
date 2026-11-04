@@ -60,7 +60,7 @@ h1 {
     box-shadow: 0 18px 50px rgba(0, 0, 0, 0.3);
 }
 
-button {
+button, select {
     border: 0;
     border-radius: 16px;
     padding: 13px 17px;
@@ -69,6 +69,21 @@ button {
     cursor: pointer;
     background: linear-gradient(135deg, #73e6ff, #d8faff);
     color: #07111f;
+    outline: none;
+}
+
+select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--ink);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    text-align-last: center;
+}
+
+select option {
+    background: #0f233a;
+    color: var(--ink);
 }
 
 button:disabled {
@@ -101,6 +116,8 @@ button:disabled {
             rgba(81, 153, 195, 0.25),
             transparent 65%
         );
+    touch-action: manipulation;
+    cursor: pointer;
 }
 
 .orb {
@@ -187,12 +204,19 @@ button:disabled {
     margin: 8px;
 }
 
-.controls {
+.timer-display {
+    font-size: 1.1rem;
+    color: var(--accent);
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.controls, .settings {
     display: flex;
     justify-content: center;
     gap: 10px;
     flex-wrap: wrap;
-    margin-top: 18px;
+    margin-top: 14px;
 }
 
 #status {
@@ -202,8 +226,7 @@ button:disabled {
 }
 
 audio {
-    width: 100%;
-    margin-top: 16px;
+    display: none; /* Controlled via JS */
 }
 </style>
 </head>
@@ -216,7 +239,7 @@ audio {
     <div>
         <h1>🌙 Relaxation Sanctuary</h1>
         <p class="subtitle">
-            Breathe slowly and gently move your phone to release magical sparkles.
+            Breathe slowly, tap, or move your phone to release magical sparkles.
         </p>
     </div>
 
@@ -241,10 +264,33 @@ audio {
         —
     </div>
 
+    <div class="timer-display" id="timerDisplay">
+        Session Duration: Unlimited
+    </div>
+
     <p id="status">
-        Start breathing or enable motion sparkles.
+        Select your time and soundscape, then start breathing.
     </p>
 
+    <!-- Settings options -->
+    <div class="settings">
+        <select id="durationSelect" aria-label="Session Duration">
+            <option value="0">⏱️ Unlimited Time</option>
+            <option value="60">⏱️ 1 Minute</option>
+            <option value="180">⏱️ 3 Minutes</option>
+            <option value="300">⏱️ 5 Minutes</option>
+            <option value="600">⏱️ 10 Minutes</option>
+        </select>
+
+        <select id="audioSelect" aria-label="Soundscape Selector">
+            <option value="cosmic">🌌 Cosmic Ambient (Synth)</option>
+            <option value="waves">🌊 Ocean Waves (Synth)</option>
+            <option value="rain">🌧️ Gentle Rain (Synth)</option>
+            <option value="bowl">🥣 Singing Bowl (Synth)</option>
+            <option value="file">🎶 Local File (ambient-sanctuary.wav)</option>
+            <option value="none">🔇 Mute Audio</option>
+        </select>
+    </div>
 
     <!-- All activity buttons -->
     <div class="controls">
@@ -263,19 +309,13 @@ audio {
 
     </div>
 
-
-    <!-- Audio -->
-    <audio id="ambient" controls loop preload="auto">
-        <source
-            src="audio/ambient-sanctuary.wav"
-            type="audio/wav"
-        >
-        Your browser does not support audio playback.
+    <!-- Audio Element for local file fallback -->
+    <audio id="ambientFile" loop preload="auto">
+        <source src="audio/ambient-sanctuary.wav" type="audio/wav">
     </audio>
 
-
     <p class="note">
-        Gently moving your phone creates visual sparkles around the breathing orb.
+        Gently moving your phone or tapping the orb area creates visual sparkles around the breathing orb.
         This activity supports mindfulness and relaxation and is not a medical treatment.
     </p>
 
@@ -283,33 +323,159 @@ audio {
 
 </main>
 
-
 <script>
 
 /* Helper */
 const $ = (id) => document.getElementById(id);
 
-
 /* =========================
-   BREATHING ACTIVITY
+   SYNTHESIZED AUDIO (Web Audio API)
 ========================= */
 
-let timer = null;
+let audioCtx = null;
+let synthGain = null;
+let activeNodes = [];
+
+function initAudioContext() {
+    if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+            audioCtx = new AudioContextClass();
+        }
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+}
+
+function stopAllAudio() {
+    // Stop Web Audio synth
+    activeNodes.forEach(node => {
+        try { node.stop(); } catch(e){}
+        try { node.disconnect(); } catch(e){}
+    });
+    activeNodes = [];
+    
+    // Stop local HTML5 Audio
+    const localAudio = $("ambientFile");
+    localAudio.pause();
+    localAudio.currentTime = 0;
+}
+
+function playSelectedAudio() {
+    stopAllAudio();
+    initAudioContext();
+    
+    const choice = $("audioSelect").value;
+    
+    if (choice === "none") return;
+    
+    if (choice === "file") {
+        $("ambientFile").play().catch(err => {
+            console.warn("Local file playback prevented or missing:", err);
+            $("status").textContent = "Local file soundscape requires 'audio/ambient-sanctuary.wav'. Switching to Synth Ambient.";
+            $("audioSelect").value = "cosmic";
+            playSelectedAudio();
+        });
+        return;
+    }
+
+    if (!audioCtx) return;
+
+    synthGain = audioCtx.createGain();
+    synthGain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    synthGain.connect(audioCtx.destination);
+
+    if (choice === "cosmic") {
+        // Deep Drone + Shimmer
+        const freqs = [55, 110, 164.81, 220, 277.18];
+        freqs.forEach(freq => {
+            const osc = audioCtx.createOscillator();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            const lfo = audioCtx.createOscillator();
+            lfo.frequency.value = 0.1 + Math.random() * 0.1;
+            const lfoGain = audioCtx.createGain();
+            lfoGain.gain.value = 2;
+            lfo.connect(lfoGain);
+            lfoGain.connect(osc.frequency);
+            
+            osc.connect(synthGain);
+            osc.start();
+            lfo.start();
+            activeNodes.push(osc, lfo);
+        });
+    } 
+    else if (choice === "waves" || choice === "rain") {
+        // Pink/White Noise Filtered
+        const bufferSize = audioCtx.sampleRate * 2;
+        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1;
+        }
+
+        const whiteNoise = audioCtx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+        whiteNoise.loop = true;
+
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = choice === "waves" ? "lowpass" : "bandpass";
+        filter.frequency.setValueAtTime(choice === "waves" ? 300 : 800, audioCtx.currentTime);
+
+        const lfo = audioCtx.createOscillator();
+        lfo.frequency.value = choice === "waves" ? 0.12 : 0.4;
+        const lfoGain = audioCtx.createGain();
+        lfoGain.gain.value = choice === "waves" ? 250 : 300;
+        
+        lfo.connect(lfoGain);
+        lfoGain.connect(filter.frequency);
+
+        whiteNoise.connect(filter);
+        filter.connect(synthGain);
+
+        whiteNoise.start();
+        lfo.start();
+        activeNodes.push(whiteNoise, lfo);
+    }
+    else if (choice === "bowl") {
+        // Tibetan Singing Bowl Harmonic Chime
+        const baseFreq = 216;
+        const harmonics = [1, 2.76, 5.4, 8.9];
+        harmonics.forEach(h => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(baseFreq * h, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.2 / h, audioCtx.currentTime);
+            
+            osc.connect(gain);
+            gain.connect(synthGain);
+            osc.start();
+            activeNodes.push(osc);
+        });
+    }
+}
+
+
+/* =========================
+   BREATHING ACTIVITY & TIMER
+========================= */
+
+let breathingInterval = null;
+let countdownInterval = null;
 let seconds = 0;
+let remainingSeconds = 0;
 let running = false;
 
-
 function updateBreathing() {
-
     const t = seconds % 8;
 
     if (t < 4) {
-
         $("phase").textContent = "Breathe in";
         $("count").textContent = 4 - t;
-
     } else {
-
         $("phase").textContent = "Breathe out";
         $("count").textContent = 8 - t;
     }
@@ -317,317 +483,196 @@ function updateBreathing() {
     seconds++;
 }
 
+function updateCountdown() {
+    if (remainingSeconds <= 0) {
+        stopSession("Session complete! Mindful breath period ended.");
+        return;
+    }
+    remainingSeconds--;
+    formatTimerDisplay(remainingSeconds);
+}
+
+function formatTimerDisplay(totalSecs) {
+    if (totalSecs <= 0 && $("durationSelect").value === "0") {
+        $("timerDisplay").textContent = "Session Duration: Unlimited";
+        return;
+    }
+    const mins = Math.floor(totalSecs / 60);
+    const secs = totalSecs % 60;
+    $("timerDisplay").textContent = `Time Remaining: ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+}
 
 $("start").addEventListener("click", () => {
-
     if (running) return;
 
     running = true;
     seconds = 0;
 
-    $("orb").classList.add("breathe");
+    const selectedDuration = parseInt($("durationSelect").value, 10);
+    remainingSeconds = selectedDuration;
 
+    $("orb").classList.add("breathe");
     $("start").disabled = true;
     $("stop").disabled = false;
+    $("durationSelect").disabled = true;
 
-    $("status").textContent =
-        "Follow the glowing orb at your own comfortable pace.";
+    $("status").textContent = "Follow the glowing orb at your own comfortable pace.";
+
+    playSelectedAudio();
 
     updateBreathing();
+    breathingInterval = setInterval(updateBreathing, 1000);
 
-    timer = setInterval(
-        updateBreathing,
-        1000
-    );
+    if (selectedDuration > 0) {
+        formatTimerDisplay(remainingSeconds);
+        countdownInterval = setInterval(updateCountdown, 1000);
+    } else {
+        $("timerDisplay").textContent = "Session Duration: Unlimited";
+    }
 });
 
-
-$("stop").addEventListener("click", () => {
-
+function stopSession(statusMsg = "Your mindful pause is complete.") {
     running = false;
 
-    clearInterval(timer);
+    clearInterval(breathingInterval);
+    clearInterval(countdownInterval);
+    stopAllAudio();
 
     $("orb").classList.remove("breathe");
-
-    $("phase").textContent =
-        "Session paused";
-
-    $("count").textContent =
-        "—";
+    $("phase").textContent = "Session paused";
+    $("count").textContent = "—";
 
     $("start").disabled = false;
     $("stop").disabled = true;
+    $("durationSelect").disabled = false;
 
-    $("status").textContent =
-        "Your mindful pause is complete.";
+    $("status").textContent = statusMsg;
+    formatTimerDisplay(parseInt($("durationSelect").value, 10));
+}
+
+$("stop").addEventListener("click", () => stopSession());
+
+$("durationSelect").addEventListener("change", (e) => {
+    const val = parseInt(e.target.value, 10);
+    formatTimerDisplay(val);
+});
+
+$("audioSelect").addEventListener("change", () => {
+    if (running) {
+        playSelectedAudio();
+    }
 });
 
 
 /* =========================
-   MOTION SENSOR SPARKLES
+   MOTION & TOUCH SPARKLES
 ========================= */
 
 let motionEnabled = false;
 let lastMagnitude = null;
 let lastSparkTime = 0;
 
-
-/* Create magical sparkles */
-
-function createSparkles(intensity = 1) {
-
+function createSparkles(intensity = 1, originX = null, originY = null) {
     const scene = $("scene");
-
-    const amount = Math.max(
-        4,
-        Math.min(
-            12,
-            Math.round(4 + intensity * 3)
-        )
-    );
-
+    const amount = Math.max(4, Math.min(12, Math.round(4 + intensity * 3)));
 
     for (let i = 0; i < amount; i++) {
+        const sparkle = document.createElement("span");
+        sparkle.className = "sparkle";
 
-        const sparkle =
-            document.createElement("span");
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 40 + Math.random() * 110;
 
-        sparkle.className =
-            "sparkle";
+        if (originX !== null && originY !== null) {
+            sparkle.style.left = originX + "px";
+            sparkle.style.top = originY + "px";
+        } else {
+            sparkle.style.left = (50 + (Math.random() - 0.5) * 25) + "%";
+            sparkle.style.top = (50 + (Math.random() - 0.5) * 25) + "%";
+        }
 
+        sparkle.style.setProperty("--dx", Math.cos(angle) * distance + "px");
+        sparkle.style.setProperty("--dy", Math.sin(angle) * distance + "px");
 
-        const angle =
-            Math.random() * Math.PI * 2;
+        scene.appendChild(sparkle);
 
-        const distance =
-            40 + Math.random() * 110;
-
-
-        sparkle.style.left =
-            (50 + (Math.random() - 0.5) * 25)
-            + "%";
-
-
-        sparkle.style.top =
-            (50 + (Math.random() - 0.5) * 25)
-            + "%";
-
-
-        sparkle.style.setProperty(
-            "--dx",
-            Math.cos(angle)
-            * distance
-            + "px"
-        );
-
-
-        sparkle.style.setProperty(
-            "--dy",
-            Math.sin(angle)
-            * distance
-            + "px"
-        );
-
-
-        scene.appendChild(
-            sparkle
-        );
-
-
-        setTimeout(() => {
-
-            sparkle.remove();
-
-        }, 1500);
+        setTimeout(() => sparkle.remove(), 1400);
     }
 }
 
+// Tap/Click to spawn sparkles fallback
+$("scene").addEventListener("click", (e) => {
+    const rect = $("scene").getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    createSparkles(1.5, x, y);
+});
 
 /* Detect phone movement */
-
 function handleMotion(event) {
-
     if (!motionEnabled) return;
 
-
-    const acceleration =
-        event.accelerationIncludingGravity
-        || event.acceleration;
-
-
+    const acceleration = event.accelerationIncludingGravity || event.acceleration;
     if (!acceleration) return;
 
+    const x = Number(acceleration.x) || 0;
+    const y = Number(acceleration.y) || 0;
+    const z = Number(acceleration.z) || 0;
 
-    const x =
-        Number(acceleration.x) || 0;
-
-    const y =
-        Number(acceleration.y) || 0;
-
-    const z =
-        Number(acceleration.z) || 0;
-
-
-    const magnitude =
-        Math.sqrt(
-            x * x +
-            y * y +
-            z * z
-        );
-
+    const magnitude = Math.sqrt(x * x + y * y + z * z);
 
     if (lastMagnitude !== null) {
+        const change = Math.abs(magnitude - lastMagnitude);
+        const now = Date.now();
 
-        const change =
-            Math.abs(
-                magnitude
-                - lastMagnitude
-            );
-
-
-        const now =
-            Date.now();
-
-
-        /* Lower threshold makes gentle movement easier to detect */
-
-        if (
-            change > 0.8
-            &&
-            now - lastSparkTime > 250
-        ) {
-
-            lastSparkTime =
-                now;
-
-
-            createSparkles(
-                Math.min(
-                    2.5,
-                    change / 2
-                )
-            );
-
-
-            $("status").textContent =
-                "Motion detected ✨ Sparkles released.";
+        if (change > 0.8 && now - lastSparkTime > 250) {
+            lastSparkTime = now;
+            createSparkles(Math.min(2.5, change / 2));
+            $("status").textContent = "Motion detected ✨ Sparkles released.";
         }
     }
-
-
-    lastMagnitude =
-        magnitude;
+    lastMagnitude = magnitude;
 }
 
-
 /* Enable motion sensor */
-
 async function enableMotion() {
-
     try {
-
-        if (
-            typeof DeviceMotionEvent ===
-            "undefined"
-        ) {
-
-            $("status").textContent =
-                "Motion sensors are not available in this browser.";
-
+        if (typeof DeviceMotionEvent === "undefined") {
+            $("status").textContent = "Motion sensors not detected. Tap the orb area to release sparkles!";
             return;
         }
 
-
-        /*
-        Some mobile browsers require
-        explicit permission.
-        */
-
-        if (
-            typeof DeviceMotionEvent.requestPermission ===
-            "function"
-        ) {
-
-            const permission =
-                await DeviceMotionEvent
-                    .requestPermission();
-
-
-            if (
-                permission !== "granted"
-            ) {
-
-                $("status").textContent =
-                    "Motion permission was not granted.";
-
+        if (typeof DeviceMotionEvent.requestPermission === "function") {
+            const permission = await DeviceMotionEvent.requestPermission();
+            if (permission !== "granted") {
+                $("status").textContent = "Motion permission was not granted.";
                 return;
             }
         }
 
-
-        window.addEventListener(
-            "devicemotion",
-            handleMotion,
-            { passive: true }
-        );
-
-
-        motionEnabled =
-            true;
-
-
-        $("motionBtn").textContent =
-            "✨ Motion sparkles enabled";
-
-
-        $("motionBtn").disabled =
-            true;
-
-
-        $("status").textContent =
-            "Motion sensor enabled. Gently move your phone to create sparkles.";
-
-
-        /*
-        Test sparkle so you can immediately
-        confirm that the visual effect works.
-        */
+        window.addEventListener("devicemotion", handleMotion, { passive: true });
+        motionEnabled = true;
+        $("motionBtn").textContent = "✨ Motion sparkles enabled";
+        $("motionBtn").disabled = true;
+        $("status").textContent = "Motion sensor enabled. Gently move your phone to create sparkles.";
 
         createSparkles(1.5);
 
-
     } catch (error) {
-
         console.error(error);
-
-
-        $("status").textContent =
-            "Could not enable motion. Check your browser permissions.";
+        $("status").textContent = "Could not enable motion. Tap screen to create sparkles instead.";
     }
 }
 
-
-/* Motion button */
-
-$("motionBtn").addEventListener(
-    "click",
-    enableMotion
-);
-
+$("motionBtn").addEventListener("click", enableMotion);
 
 /* =========================
    HOME BUTTON
 ========================= */
 
-$("homeBtn").addEventListener(
-    "click",
-    () => {
-
-        window.location.href =
-            "https://estefanie24.github.io/Argyria/";
-    }
-);
+$("homeBtn").addEventListener("click", () => {
+    window.location.href = "https://estefanie24.github.io/Argyria/";
+});
 
 </script>
 
