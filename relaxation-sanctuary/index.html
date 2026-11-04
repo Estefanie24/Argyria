@@ -4,32 +4,141 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Argyria | Relaxation Sanctuary</title>
+
 <style>
-:root{--ink:#eaf7ff;--muted:#b7cbd9;--card:rgba(10,25,48,.78);--accent:#79eaff}
-*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink);
-background:radial-gradient(circle at 50% 12%,#315d84 0,#142944 40%,#07111f 100%)}
-main{max-width:720px;margin:auto;padding:20px 16px 40px}
-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
-h1{margin:0;font-size:clamp(1.6rem,6vw,2.4rem)}.subtitle,.note{color:var(--muted);line-height:1.5}
-.card{background:var(--card);border:1px solid rgba(150,225,255,.18);border-radius:26px;padding:22px;box-shadow:0 18px 50px rgba(0,0,0,.3)}
-button{border:0;border-radius:16px;padding:13px 17px;font-size:1rem;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#73e6ff,#d8faff);color:#07111f}
-.secondary{background:rgba(255,255,255,.1);color:var(--ink);border:1px solid rgba(255,255,255,.18)}
-.center{text-align:center}.orb{width:150px;height:150px;margin:30px auto;border-radius:50%;
-background:radial-gradient(circle at 35% 30%,#fff,#c2f7ff 10%,#66dfff 38%,#7656d7 72%,#27164e);
-box-shadow:0 0 30px #75eaff,0 0 80px rgba(113,102,255,.55)}
-.breathe{animation:breathe 8s ease-in-out infinite}@keyframes breathe{0%,100%{transform:scale(.78)}50%{transform:scale(1.42)}}
-.phase{font-size:1.5rem;font-weight:800}.count{font-size:2.7rem;color:#bdf4ff;font-weight:800;margin:8px}
-.controls{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}
-audio{width:100%;margin-top:18px}#status{color:#bdf4ff;min-height:1.5em}
-  <div class="scene" id="scene">
-    <div class="orb" id="orb"></div>
-</div>
-</style>
-  .scene {
-    position: relative;
-    overflow: hidden;
+:root {
+    --ink: #eaf7ff;
+    --muted: #b7cbd9;
+    --card: rgba(10, 25, 48, .78);
+    --accent: #79eaff;
 }
 
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: var(--ink);
+    background: radial-gradient(
+        circle at 50% 12%,
+        #315d84 0,
+        #142944 40%,
+        #07111f 100%
+    );
+}
+
+main {
+    max-width: 720px;
+    margin: auto;
+    padding: 20px 16px 40px;
+}
+
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+h1 {
+    margin: 0;
+    font-size: clamp(1.6rem, 6vw, 2.4rem);
+}
+
+.subtitle,
+.note {
+    color: var(--muted);
+    line-height: 1.5;
+}
+
+.card {
+    background: var(--card);
+    border: 1px solid rgba(150, 225, 255, .18);
+    border-radius: 26px;
+    padding: 22px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, .3);
+}
+
+button {
+    border: 0;
+    border-radius: 16px;
+    padding: 13px 17px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    background: linear-gradient(135deg, #73e6ff, #d8faff);
+    color: #07111f;
+}
+
+button:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+.secondary {
+    background: rgba(255, 255, 255, .1);
+    color: var(--ink);
+    border: 1px solid rgba(255, 255, 255, .18);
+}
+
+.center {
+    text-align: center;
+}
+
+/* Breathing and sparkle area */
+.scene {
+    position: relative;
+    height: 330px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    border-radius: 22px;
+    background: radial-gradient(
+        circle at 50% 50%,
+        rgba(81, 153, 195, .22),
+        transparent 65%
+    );
+}
+
+.orb {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    position: relative;
+    z-index: 2;
+    background: radial-gradient(
+        circle at 35% 30%,
+        #fff,
+        #c2f7ff 10%,
+        #66dfff 38%,
+        #7656d7 72%,
+        #27164e
+    );
+    box-shadow:
+        0 0 30px #75eaff,
+        0 0 80px rgba(113, 102, 255, .55);
+}
+
+.breathe {
+    animation: breathe 8s ease-in-out infinite;
+}
+
+@keyframes breathe {
+    0%, 100% {
+        transform: scale(.78);
+    }
+
+    50% {
+        transform: scale(1.42);
+    }
+}
+
+/* Motion-generated sparkles */
 .sparkle {
     position: absolute;
     width: 8px;
@@ -38,14 +147,14 @@ audio{width:100%;margin-top:18px}#status{color:#bdf4ff;min-height:1.5em}
     background: white;
     box-shadow:
         0 0 8px 2px #79eaff,
-        0 0 20px 5px rgba(140, 120, 255, 0.55);
+        0 0 20px 5px rgba(140, 120, 255, .55);
     pointer-events: none;
     animation: sparkleMove 1.4s ease-out forwards;
 }
 
 @keyframes sparkleMove {
     0% {
-        transform: translate(0, 0) scale(0.4);
+        transform: translate(0, 0) scale(.4);
         opacity: 0;
     }
 
@@ -60,66 +169,170 @@ audio{width:100%;margin-top:18px}#status{color:#bdf4ff;min-height:1.5em}
         opacity: 0;
     }
 }
+
+.phase {
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+.count {
+    font-size: 2.7rem;
+    color: #bdf4ff;
+    font-weight: 800;
+    margin: 8px;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 18px;
+}
+
+audio {
+    width: 100%;
+    margin-top: 18px;
+}
+
+#status {
+    color: #bdf4ff;
+    min-height: 1.5em;
+}
+</style>
 </head>
+
 <body>
 <main>
+
 <header>
-<div><h1>🌙 Relaxation Sanctuary</h1><p class="subtitle">A gentle space for breathing, calm, and mindful pauses.</p></div>
-<button class="secondary" id="homeBtn">← Argyria Home</button>
+    <div>
+        <h1>🌙 Relaxation Sanctuary</h1>
+        <p class="subtitle">
+            A gentle space for breathing, calm, and mindful pauses.
+        </p>
+    </div>
+
+    <button class="secondary" id="homeBtn">
+        ← Argyria Home
+    </button>
 </header>
 
 <section class="card center">
-<div class="orb" id="orb"></div>
-<div class="phase" id="phase">Ready to begin</div>
-<div class="count" id="count">—</div>
-<p id="status">Start a breathing session or play the ambient audio.</p>
 
-<div class="controls">
-<button id="start">Start breathing</button>
-<button id="motionBtn" class="secondary">
-  ✨ Enable motion sparkles
-</button>
-<button class="secondary" id="stop" disabled>Stop</button>
-</div>
+    <div class="scene" id="scene">
+        <div class="orb" id="orb"></div>
+    </div>
 
-<audio id="ambient" controls loop preload="auto">
-  <source src="audio/ambient-sanctuary.wav" type="audio/wav">
-  Your browser does not support audio playback.
-</audio>
-<p class="note">Use the audio controls above to play or pause the ambient sound. This activity supports mindfulness and relaxation and is not a medical treatment.</p>
+    <div class="phase" id="phase">
+        Ready to begin
+    </div>
+
+    <div class="count" id="count">
+        —
+    </div>
+
+    <p id="status">
+        Start a breathing session or gently move your phone to create sparkles.
+    </p>
+
+    <div class="controls">
+        <button id="start">
+            Start breathing
+        </button>
+
+        <button id="motionBtn" class="secondary">
+            ✨ Enable motion sparkles
+        </button>
+
+        <button class="secondary" id="stop" disabled>
+            Stop
+        </button>
+    </div>
+
+    <audio id="ambient" controls loop preload="auto">
+        <source
+            src="audio/ambient-sanctuary.wav"
+            type="audio/wav"
+        >
+        Your browser does not support audio playback.
+    </audio>
+
+    <p class="note">
+        Use the audio controls above to play or pause the ambient sound.
+        Gentle movement creates visual sparkles for the relaxation experience.
+        This activity supports mindfulness and relaxation and is not a medical treatment.
+    </p>
+
 </section>
 </main>
+
 <script>
-const $=id=>document.getElementById(id);
-let timer=null,seconds=0,running=false;
-function update(){
- const t=seconds%8;
- if(t<4){$('phase').textContent='Breathe in';$('count').textContent=4-t;}
- else{$('phase').textContent='Breathe out';$('count').textContent=8-t;}
- seconds++;
+const $ = id => document.getElementById(id);
+
+/* Breathing activity */
+
+let timer = null;
+let seconds = 0;
+let running = false;
+
+function updateBreathing() {
+    const t = seconds % 8;
+
+    if (t < 4) {
+        $("phase").textContent = "Breathe in";
+        $("count").textContent = 4 - t;
+    } else {
+        $("phase").textContent = "Breathe out";
+        $("count").textContent = 8 - t;
+    }
+
+    seconds++;
 }
-$('start').onclick=()=>{
- if(running)return;
- running=true;seconds=0;$('orb').classList.add('breathe');
- $('start').disabled=true;$('stop').disabled=false;
- $('status').textContent='Follow the orb at your own comfortable pace.';
- update();timer=setInterval(update,1000);
+
+$("start").onclick = () => {
+    if (running) return;
+
+    running = true;
+    seconds = 0;
+
+    $("orb").classList.add("breathe");
+    $("start").disabled = true;
+    $("stop").disabled = false;
+
+    $("status").textContent =
+        "Follow the glowing orb at your own comfortable pace.";
+
+    updateBreathing();
+    timer = setInterval(updateBreathing, 1000);
 };
-$('stop').onclick=()=>{
- running=false;clearInterval(timer);$('orb').classList.remove('breathe');
- $('phase').textContent='Session paused';$('count').textContent='—';
- $('start').disabled=false;$('stop').disabled=true;
- $('status').textContent='Gentle progress: your mindful pause is complete.';
+
+$("stop").onclick = () => {
+    running = false;
+    clearInterval(timer);
+
+    $("orb").classList.remove("breathe");
+
+    $("phase").textContent = "Session paused";
+    $("count").textContent = "—";
+
+    $("start").disabled = false;
+    $("stop").disabled = true;
+
+    $("status").textContent =
+        "Gentle progress: your mindful pause is complete.";
 };
-// Explicit repository home URL. If this opens Motion Lab, the repository root index.html
-// has been replaced and must be restored separately.
-$('homeBtn').onclick=()=>location.href='https://estefanie24.github.io/Argyria/';
-  let motionEnabled = false;
+
+
+/* Motion sensor and magical sparkles */
+
+let motionEnabled = false;
 let lastMagnitude = null;
 let lastSparkTime = 0;
 
 function createSparkles(intensity = 1) {
-    const scene = document.getElementById("scene");
+
+    const scene = $("scene");
 
     const amount = Math.max(
         3,
@@ -127,6 +340,7 @@ function createSparkles(intensity = 1) {
     );
 
     for (let i = 0; i < amount; i++) {
+
         const sparkle = document.createElement("span");
         sparkle.className = "sparkle";
 
@@ -158,6 +372,7 @@ function createSparkles(intensity = 1) {
 }
 
 function handleMotion(event) {
+
     if (!motionEnabled) return;
 
     const acceleration =
@@ -171,10 +386,13 @@ function handleMotion(event) {
     const z = Number(acceleration.z) || 0;
 
     const magnitude = Math.sqrt(
-        x * x + y * y + z * z
+        x * x +
+        y * y +
+        z * z
     );
 
     if (lastMagnitude !== null) {
+
         const change =
             Math.abs(magnitude - lastMagnitude);
 
@@ -189,6 +407,9 @@ function handleMotion(event) {
             createSparkles(
                 Math.min(2.5, change / 2)
             );
+
+            $("status").textContent =
+                "Motion detected ✨ Magical sparkles released.";
         }
     }
 
@@ -196,25 +417,27 @@ function handleMotion(event) {
 }
 
 async function enableMotion() {
+
     try {
+
         if (typeof DeviceMotionEvent === "undefined") {
-            alert(
-                "Motion sensors are not available in this browser."
-            );
+            $("status").textContent =
+                "Motion sensors are not available in this browser.";
             return;
         }
 
+        /* Required by some mobile browsers */
         if (
             typeof DeviceMotionEvent.requestPermission ===
             "function"
         ) {
+
             const permission =
                 await DeviceMotionEvent.requestPermission();
 
             if (permission !== "granted") {
-                alert(
-                    "Motion permission was not granted."
-                );
+                $("status").textContent =
+                    "Motion permission was not granted.";
                 return;
             }
         }
@@ -227,26 +450,36 @@ async function enableMotion() {
 
         motionEnabled = true;
 
-        const button =
-            document.getElementById("motionBtn");
-
-        button.textContent =
+        $("motionBtn").textContent =
             "✨ Motion sparkles enabled";
 
-        button.disabled = true;
+        $("motionBtn").disabled = true;
+
+        $("status").textContent =
+            "Motion sensor enabled. Gently move your phone to create sparkles.";
 
     } catch (error) {
+
         console.error(error);
 
-        alert(
-            "Could not enable motion. Please check your browser permissions."
-        );
+        $("status").textContent =
+            "Could not enable motion. Check your browser permissions and try again.";
     }
 }
 
-document
-    .getElementById("motionBtn")
-    .addEventListener("click", enableMotion);
+$("motionBtn").addEventListener(
+    "click",
+    enableMotion
+);
+
+
+/* Navigation */
+
+$("homeBtn").onclick = () => {
+    window.location.href =
+        "https://estefanie24.github.io/Argyria/";
+};
 </script>
+
 </body>
 </html>
